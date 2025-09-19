@@ -4,6 +4,8 @@ A simple and lightweight TODO management plugin for Neovim.
 
 **⚠️ Note:** This is a basic hobby plugin for personal use. Use at your own discretion.
 
+**🎨 Color Note:** This plugin uses terminal colors (ctermfg) for highlighting, which means appearance depends on your terminal's color scheme. If colors don't display correctly or you prefer GUI colors, this plugin might not be ideal for your setup.
+
 <!-- ## Demo
 
 ![simple-todo.nvim demo](demo.gif) -->
@@ -83,6 +85,16 @@ TODOs are color-coded by severity:
 - **Medium** (Green) - Normal priority tasks
 - **Minor** (Gray) - Low priority tasks
 - **Nice to Have** (Blue) - Optional tasks
+
+## Alternative TODO Plugins
+
+If you need more advanced features, consider these excellent alternatives:
+
+- [**todo-comments.nvim**](https://github.com/folke/todo-comments.nvim) - Highlight and search TODO comments in your code
+- [**vim-todo-lists**](https://github.com/aserebryakov/vim-todo-lists) - TODO lists with checkbox support
+- [**dooing**](https://github.com/atiladefreitas/dooing) - A more feature-rich TODO manager with categories and persistence
+- [**taskwiki**](https://github.com/tools-life/taskwiki) - Combines vim wiki with Taskwarrior for advanced task management
+- [**vimwiki**](https://github.com/vimwiki/vimwiki) - Personal wiki with TODO list capabilities
 
 ## License
 
