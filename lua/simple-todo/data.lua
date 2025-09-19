@@ -58,12 +58,21 @@ M.add_todo = function(text, severity)
   M.save_todos(todos)
 end
 
-M.delete_todo = function(index)
+M.delete_todo = function(todo_to_delete)
   local todos = M.load_todos()
-  if index > 0 and index <= #todos then
-    table.remove(todos, index)
-    M.save_todos(todos)
+
+  -- Find the TODO in the original array by matching text, severity, and created time
+  for i, todo in ipairs(todos) do
+    if todo.text == todo_to_delete.text and
+       todo.severity == todo_to_delete.severity and
+       todo.created == todo_to_delete.created then
+      table.remove(todos, i)
+      M.save_todos(todos)
+      return true
+    end
   end
+
+  return false -- TODO not found
 end
 
 M.get_sorted_todos = function()

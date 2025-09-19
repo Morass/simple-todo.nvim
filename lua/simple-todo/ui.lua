@@ -213,12 +213,16 @@ local function handle_delete()
   -- Debug info
   print(string.format("Delete: cursor at line %d, calculated index %d, total todos %d", cursor_line, index, #state.todos))
   if index > 0 and index <= #state.todos then
-    print(string.format("Deleting TODO %d: '%s'", index, state.todos[index].text))
-  end
+    local todo_to_delete = state.todos[index]
+    print(string.format("Deleting TODO %d: '%s' (severity: %s, created: %d)", index, todo_to_delete.text, todo_to_delete.severity, todo_to_delete.created))
 
-  if index > 0 and index <= #state.todos then
-    data.delete_todo(index)
-    render_list(true)
+    -- Pass the actual TODO object instead of index
+    local success = data.delete_todo(todo_to_delete)
+    if success then
+      render_list(true)
+    else
+      print("Failed to delete TODO - not found in original list")
+    end
   end
 end
 
