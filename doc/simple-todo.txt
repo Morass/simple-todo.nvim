@@ -1,0 +1,95 @@
+*simple-todo.txt*  Simple TODO management for Neovim
+
+==============================================================================
+CONTENTS                                                   *simple-todo-contents*
+
+  1. Introduction .......................... |simple-todo-introduction|
+  2. Installation .......................... |simple-todo-installation|
+  3. Commands .............................. |simple-todo-commands|
+  4. Configuration ......................... |simple-todo-configuration|
+  5. Usage ................................. |simple-todo-usage|
+
+==============================================================================
+INTRODUCTION                                           *simple-todo-introduction*
+
+simple-todo.nvim is a lightweight TODO management plugin for Neovim. It
+provides a simple popup interface for managing tasks with severity-based
+categorization.
+
+==============================================================================
+INSTALLATION                                           *simple-todo-installation*
+
+Using vim-plug:
+>
+  Plug 'morass/simple-todo.nvim'
+<
+
+Using packer.nvim:
+>
+  use 'morass/simple-todo.nvim'
+<
+
+==============================================================================
+COMMANDS                                                   *simple-todo-commands*
+
+                                                            *:SimpleTodoToggle*
+:SimpleTodoToggle
+    Toggle the TODO management window. Opens if closed, closes if open.
+
+==============================================================================
+CONFIGURATION                                         *simple-todo-configuration*
+
+                                                           *g:simple_todo_file*
+g:simple_todo_file
+    Path to the JSON file where TODOs are stored.
+    Default: `stdpath('data') . '/simple-todo.json'`
+
+    Example:
+>
+      let g:simple_todo_file = '~/my-todos.json'
+<
+
+    Or using setup function:
+>
+      require('simple-todo').setup({
+        file = '~/my-todos.json'
+      })
+<
+
+==============================================================================
+USAGE                                                         *simple-todo-usage*
+
+MAIN MENU
+  - Use j/k or arrow keys to navigate
+  - Press Enter to select an option
+  - Press q to close the window
+
+  Options:
+    List    - View all TODOs
+    Add     - Create a new TODO
+    Delete  - Remove existing TODOs
+
+ADD TODO
+  1. Select severity level with j/k and Enter
+  2. Type your TODO text
+  3. Press Enter to save or Escape to cancel
+
+  Severity levels:
+    Critical     - Urgent tasks (dark red)
+    Important    - High priority (yellow)
+    Medium       - Normal priority (green)
+    Minor        - Low priority (gray)
+    Nice to Have - Optional tasks (blue)
+
+LIST VIEW
+  - TODOs are sorted by severity and creation time
+  - Use j/k to scroll through the list
+  - Press q to return to main menu
+
+DELETE MODE
+  - Navigate to a TODO with j/k
+  - Press d to delete the selected TODO
+  - Press q to return to main menu
+
+==============================================================================
+vim:tw=78:ts=8:ft=help:norl:
