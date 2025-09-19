@@ -41,9 +41,9 @@ local function render_menu()
     "",
     "  Simple TODO Manager",
     "",
-    "  [ List ]    View all todos",
-    "  [ Add ]     Create new todo",
-    "  [ Delete ]  Remove todos",
+    "  [LIST]    View all todos",
+    "  [ADD]     Create new todo",
+    "  [DELETE]  Remove todos",
     "",
     "  Press Enter to select, q to quit"
   }
@@ -56,9 +56,9 @@ local function render_menu()
   vim.api.nvim_set_hl(0, 'SimpleTodoMenuAdd', { ctermfg = 46 })   -- green
   vim.api.nvim_set_hl(0, 'SimpleTodoMenuDelete', { ctermfg = 88 }) -- red
 
-  vim.api.nvim_buf_add_highlight(state.buf, -1, 'SimpleTodoMenuList', 3, 4, 10)
-  vim.api.nvim_buf_add_highlight(state.buf, -1, 'SimpleTodoMenuAdd', 4, 4, 9)
-  vim.api.nvim_buf_add_highlight(state.buf, -1, 'SimpleTodoMenuDelete', 5, 4, 12)
+  vim.api.nvim_buf_add_highlight(state.buf, -1, 'SimpleTodoMenuList', 3, 2, 8)
+  vim.api.nvim_buf_add_highlight(state.buf, -1, 'SimpleTodoMenuAdd', 4, 2, 7)
+  vim.api.nvim_buf_add_highlight(state.buf, -1, 'SimpleTodoMenuDelete', 5, 2, 10)
 
   vim.api.nvim_buf_set_option(state.buf, 'modifiable', false)
 
@@ -87,8 +87,15 @@ local function render_list(delete_mode)
   vim.api.nvim_buf_set_option(state.buf, 'modifiable', true)
   vim.api.nvim_buf_set_lines(state.buf, 0, -1, false, lines)
 
-  -- Apply colors to TODO bullets
-  if not delete_mode then
+  -- Apply colors to TODO bullets or delete crosses
+  if delete_mode then
+    -- Color crosses in red for delete mode
+    vim.api.nvim_set_hl(0, 'SimpleTodoDeleteCross', { ctermfg = 196 })  -- bright red
+    for i, todo in ipairs(state.todos) do
+      vim.api.nvim_buf_add_highlight(state.buf, -1, 'SimpleTodoDeleteCross', 2 + i, 2, 3)
+    end
+  else
+    -- Color bullets according to severity
     for i, todo in ipairs(state.todos) do
       local severity_info = data.severities[todo.severity]
       -- Create highlight group for this severity if not already created
