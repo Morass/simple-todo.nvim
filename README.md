@@ -4,9 +4,9 @@ A simple and lightweight TODO management plugin for Neovim.
 
 **⚠️ Note:** This is a basic hobby plugin for personal use. Use at your own discretion.
 
-## Screenshot
+<!-- ## Demo
 
-![simple-todo.nvim screenshot](screenshot.png)
+![simple-todo.nvim demo](demo.gif) -->
 
 ## Features
 
