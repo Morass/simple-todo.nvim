@@ -4,14 +4,17 @@ A simple and lightweight TODO management plugin for Neovim.
 
 **⚠️ Note:** This is a basic hobby plugin for personal use. Use at your own discretion.
 
+## Screenshot
+
+![simple-todo.nvim screenshot](screenshot.png)
+
 ## Features
 
 - Simple popup window for TODO management
-- Severity-based categorization with terminal color coding
-- Color-coded menu options (List=blue, Add=green, Delete=red)
+- Severity-based categorization with color coding
 - Quick add, list, and delete functionality
-- Persistent storage in JSON format
-- Minimal dependencies (pure Lua/Neovim)
+- Persistent JSON storage
+- Pure Lua/Neovim (no external dependencies)
 
 ## Installation
 
@@ -46,26 +49,13 @@ use 'morass/simple-todo.nvim'
 
 - `:SimpleTodoToggle` - Open/close the TODO manager window
 
-### Navigation
+### Key Bindings
 
-**Main Menu:**
-- `j`/`k` or arrow keys - Navigate menu options
-- `Enter` - Select option
-- `q` - Close window
-
-**List View:**
-- `j`/`k` - Scroll through TODOs
-- `q` - Back to menu
-
-**Add TODO:**
-1. Select severity level (Critical, Important, Medium, Minor, Nice to Have) - each displayed with its color
-2. Type your TODO text directly (no prefix needed)
-3. Press `Enter` to save or `Escape` to cancel
-
-**Delete TODO:**
-- Navigate to the TODO you want to delete
-- Press `d` to delete
-- Press `q` to go back
+- `j`/`k` - Navigate up/down
+- `Enter` - Select/confirm
+- `q` - Go back/close
+- `d` - Delete (in delete mode)
+- `Escape` - Cancel text input
 
 ## Configuration
 
@@ -87,19 +77,12 @@ require('simple-todo').setup({
 
 ## Severity Levels
 
-TODOs are color-coded by severity using terminal colors:
-- **Critical** (Red, color 196) - Urgent tasks
-- **Important** (Orange, color 214) - High priority
-- **Medium** (Green, color 34) - Normal priority
-- **Minor** (Gray, color 245) - Low priority
-- **Nice to Have** (Blue, color 39) - Optional tasks
-
-## UI Details
-
-- Menu options are color-coded: List (blue), Add (green), Delete (red)
-- Empty state shows "No active TODO(s)" when list is empty
-- Text input starts at the beginning of the line with no prefix
-- All colors use terminal color codes (ctermfg) for compatibility
+TODOs are color-coded by severity:
+- **Critical** (Red) - Urgent tasks
+- **Important** (Orange) - High priority tasks
+- **Medium** (Green) - Normal priority tasks
+- **Minor** (Gray) - Low priority tasks
+- **Nice to Have** (Blue) - Optional tasks
 
 ## License
 
