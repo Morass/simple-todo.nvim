@@ -65,8 +65,8 @@ local function render_menu()
   vim.api.nvim_win_set_cursor(state.win, {4, 0})  -- Start at first menu option
 end
 
-local function render_list(delete_mode)
-  state.todos = data.get_sorted_todos()
+local function render_list_with_todos(delete_mode, todos)
+  state.todos = todos or data.get_sorted_todos()
   local lines = {
     "",
     delete_mode and "  Delete TODO (press 'd' to delete, q to go back)" or "  TODO List (press q to go back)",
@@ -110,6 +110,10 @@ local function render_list(delete_mode)
     local cursor_check = vim.api.nvim_win_get_cursor(state.win)
     print(string.format("List rendered: cursor set to line %d", cursor_check[1]))
   end
+end
+
+local function render_list(delete_mode)
+  render_list_with_todos(delete_mode, nil)
 end
 
 local function render_severity_selection()
@@ -217,9 +221,11 @@ local function handle_delete()
     print(string.format("Deleting TODO %d: '%s' (severity: %s, created: %d)", index, todo_to_delete.text, todo_to_delete.severity, todo_to_delete.created))
 
     -- Pass the actual TODO object instead of index
-    local success = data.delete_todo(todo_to_delete)
+    local success, updated_todos = data.delete_todo(todo_to_delete)
     if success then
-      render_list(true)
+      -- Use the updated list instead of re-reading from file
+      state.todos = data.sort_todos(updated_todos)
+      render_list_with_todos(true, state.todos)
     else
       print("Failed to delete TODO - not found in original list")
     end

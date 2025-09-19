@@ -68,16 +68,14 @@ M.delete_todo = function(todo_to_delete)
        todo.created == todo_to_delete.created then
       table.remove(todos, i)
       M.save_todos(todos)
-      return true
+      return true, todos -- Return the updated list to avoid re-reading
     end
   end
 
-  return false -- TODO not found
+  return false, nil -- TODO not found
 end
 
-M.get_sorted_todos = function()
-  local todos = M.load_todos()
-
+local function sort_todos(todos)
   table.sort(todos, function(a, b)
     local a_priority = severities[a.severity].priority
     local b_priority = severities[b.severity].priority
@@ -87,8 +85,14 @@ M.get_sorted_todos = function()
     end
     return a_priority < b_priority
   end)
-
   return todos
 end
+
+M.get_sorted_todos = function()
+  local todos = M.load_todos()
+  return sort_todos(todos)
+end
+
+M.sort_todos = sort_todos
 
 return M
