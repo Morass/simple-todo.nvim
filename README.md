@@ -6,9 +6,9 @@ A simple and lightweight TODO management plugin for Neovim.
 
 **🎨 Color Note:** This plugin uses terminal colors (ctermfg) for highlighting, which means appearance depends on your terminal's color scheme. If colors don't display correctly or you prefer GUI colors, this plugin might not be ideal for your setup.
 
-<!-- ## Demo
+## Demo
 
-![simple-todo.nvim demo](demo.gif) -->
+![simple-todo.nvim demo](demo.gif)
 
 ## Features
 
