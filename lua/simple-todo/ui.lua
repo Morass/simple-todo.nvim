@@ -136,7 +136,6 @@ local function render_text_input()
 
   vim.api.nvim_buf_set_option(state.buf, 'modifiable', true)
   vim.api.nvim_buf_set_lines(state.buf, 0, -1, false, lines)
-  vim.api.nvim_buf_set_option(state.buf, 'modifiable', false)
 
   vim.api.nvim_win_set_cursor(state.win, {4, 4})
   vim.cmd('startinsert')
@@ -174,8 +173,10 @@ local function handle_text_input()
   end
 
   vim.cmd('stopinsert')
-  state.mode = "list"
-  render_list(false)
+  vim.api.nvim_buf_set_option(state.buf, 'modifiable', false)
+  state.mode = "menu"
+  state.selected = 1
+  render_menu()
 end
 
 local function handle_delete()
