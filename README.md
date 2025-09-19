@@ -8,12 +8,7 @@ A simple and lightweight TODO management plugin for Neovim.
 
 ## Demo
 
-<details>
-<summary>📹 Click to view demo</summary>
-
-![Demo](demo.gif)
-
-</details>
+![simple-todo.nvim demo](demo.gif)
 
 ## Features
 
