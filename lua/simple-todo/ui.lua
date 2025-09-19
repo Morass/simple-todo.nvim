@@ -106,9 +106,6 @@ local function render_list_with_todos(delete_mode, todos)
 
   if #state.todos > 0 then
     vim.api.nvim_win_set_cursor(state.win, {4, 0})
-    -- Debug: verify cursor position
-    local cursor_check = vim.api.nvim_win_get_cursor(state.win)
-    print(string.format("List rendered: cursor set to line %d", cursor_check[1]))
   end
 end
 
@@ -211,23 +208,14 @@ end
 
 local function handle_delete()
   local cursor = vim.api.nvim_win_get_cursor(state.win)
-  local cursor_line = cursor[1]
-  local index = cursor_line - 3  -- Line 4 -> index 1, Line 5 -> index 2, etc.
+  local index = cursor[1] - 3  -- Line 4 -> index 1, Line 5 -> index 2, etc.
 
-  -- Debug info
-  print(string.format("Delete: cursor at line %d, calculated index %d, total todos %d", cursor_line, index, #state.todos))
   if index > 0 and index <= #state.todos then
     local todo_to_delete = state.todos[index]
-    print(string.format("Deleting TODO %d: '%s' (severity: %s, created: %d)", index, todo_to_delete.text, todo_to_delete.severity, todo_to_delete.created))
-
-    -- Pass the actual TODO object instead of index
     local success, updated_todos = data.delete_todo(todo_to_delete)
     if success then
-      -- Use the updated list instead of re-reading from file
       state.todos = data.sort_todos(updated_todos)
       render_list_with_todos(true, state.todos)
-    else
-      print("Failed to delete TODO - not found in original list")
     end
   end
 end
@@ -311,6 +299,7 @@ local function setup_keymaps()
     silent = true,
     callback = function()
       vim.cmd('stopinsert')
+      vim.api.nvim_buf_set_option(state.buf, 'modifiable', false)
       state.mode = "menu"
       render_menu()
     end
