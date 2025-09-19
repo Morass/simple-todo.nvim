@@ -94,11 +94,11 @@ local function render_list(delete_mode)
     vim.api.nvim_set_hl(0, 'SimpleTodo' .. todo.severity, { ctermfg = severity_info.color })
 
     if delete_mode then
-      -- Color the cross with severity color
-      vim.api.nvim_buf_add_highlight(state.buf, -1, 'SimpleTodo' .. todo.severity, 2 + i, 2, 3)
+      -- Color the cross with severity color (TODO index i is at line 3+i, but highlight is 0-indexed)
+      vim.api.nvim_buf_add_highlight(state.buf, -1, 'SimpleTodo' .. todo.severity, 3 + i - 1, 2, 3)
     else
-      -- Color the bullet with severity color
-      vim.api.nvim_buf_add_highlight(state.buf, -1, 'SimpleTodo' .. todo.severity, 2 + i, 2, 4)
+      -- Color the bullet with severity color (TODO index i is at line 3+i, but highlight is 0-indexed)
+      vim.api.nvim_buf_add_highlight(state.buf, -1, 'SimpleTodo' .. todo.severity, 3 + i - 1, 2, 4)
     end
   end
 
@@ -204,7 +204,7 @@ end
 
 local function handle_delete()
   local cursor = vim.api.nvim_win_get_cursor(state.win)
-  local index = cursor[1] - 3
+  local index = cursor[1] - 3  -- Line 4 -> index 1, Line 5 -> index 2, etc.
 
   if index > 0 and index <= #state.todos then
     data.delete_todo(index)
