@@ -5,9 +5,8 @@ local state = {
   buf = nil,
   win = nil,
   mode = "menu",
-  selected = 1,
   todos = {},
-  severity_selected = 1
+  selected_severity = nil
 }
 
 local function create_window()
@@ -52,7 +51,7 @@ local function render_menu()
   vim.api.nvim_buf_set_lines(state.buf, 0, -1, false, lines)
   vim.api.nvim_buf_set_option(state.buf, 'modifiable', false)
 
-  vim.api.nvim_win_set_cursor(state.win, {3 + state.selected, 0})
+  vim.api.nvim_win_set_cursor(state.win, {4, 0})  -- Start at first menu option
 end
 
 local function render_list(delete_mode)
@@ -121,7 +120,7 @@ local function render_severity_selection()
   end
 
   vim.api.nvim_buf_set_option(state.buf, 'modifiable', false)
-  vim.api.nvim_win_set_cursor(state.win, {3 + state.severity_selected, 0})
+  vim.api.nvim_win_set_cursor(state.win, {4, 0})  -- Start at first severity option
 end
 
 local function render_text_input()
@@ -142,26 +141,33 @@ local function render_text_input()
 end
 
 local function handle_menu_select()
-  if state.selected == 1 then
+  local cursor = vim.api.nvim_win_get_cursor(state.win)
+  local row = cursor[1]
+
+  -- Menu options are on lines 4, 5, 6
+  if row == 4 then
     state.mode = "list"
-    state.selected = 1
     render_list(false)
-  elseif state.selected == 2 then
+  elseif row == 5 then
     state.mode = "severity"
-    state.severity_selected = 1
     render_severity_selection()
-  elseif state.selected == 3 then
+  elseif row == 6 then
     state.mode = "delete"
-    state.selected = 1
     render_list(true)
   end
 end
 
 local function handle_severity_select()
-  local severity_names = {"critical", "important", "medium", "minor", "nice_to_have"}
-  state.selected_severity = severity_names[state.severity_selected]
-  state.mode = "input"
-  render_text_input()
+  local cursor = vim.api.nvim_win_get_cursor(state.win)
+  local row = cursor[1]
+
+  -- Severity options are on lines 4-8
+  if row >= 4 and row <= 8 then
+    local severity_names = {"critical", "important", "medium", "minor", "nice_to_have"}
+    state.selected_severity = severity_names[row - 3]
+    state.mode = "input"
+    render_text_input()
+  end
 end
 
 local function handle_text_input()
@@ -175,7 +181,6 @@ local function handle_text_input()
   vim.cmd('stopinsert')
   vim.api.nvim_buf_set_option(state.buf, 'modifiable', false)
   state.mode = "menu"
-  state.selected = 1
   render_menu()
 end
 
@@ -203,7 +208,6 @@ local function setup_keymaps()
       M.close()
     else
       state.mode = "menu"
-      state.selected = 1
       render_menu()
     end
   end)
@@ -217,24 +221,32 @@ local function setup_keymaps()
   end)
 
   map('j', function()
-    if state.mode == "menu" and state.selected < 3 then
-      state.selected = state.selected + 1
-      render_menu()
-    elseif state.mode == "severity" and state.severity_selected < 5 then
-      state.severity_selected = state.severity_selected + 1
-      render_severity_selection()
+    if state.mode == "menu" then
+      local cursor = vim.api.nvim_win_get_cursor(state.win)
+      if cursor[1] < 6 then
+        vim.api.nvim_win_set_cursor(state.win, {cursor[1] + 1, 0})
+      end
+    elseif state.mode == "severity" then
+      local cursor = vim.api.nvim_win_get_cursor(state.win)
+      if cursor[1] < 8 then
+        vim.api.nvim_win_set_cursor(state.win, {cursor[1] + 1, 0})
+      end
     elseif (state.mode == "list" or state.mode == "delete") then
       vim.cmd('normal! j')
     end
   end)
 
   map('k', function()
-    if state.mode == "menu" and state.selected > 1 then
-      state.selected = state.selected - 1
-      render_menu()
-    elseif state.mode == "severity" and state.severity_selected > 1 then
-      state.severity_selected = state.severity_selected - 1
-      render_severity_selection()
+    if state.mode == "menu" then
+      local cursor = vim.api.nvim_win_get_cursor(state.win)
+      if cursor[1] > 4 then
+        vim.api.nvim_win_set_cursor(state.win, {cursor[1] - 1, 0})
+      end
+    elseif state.mode == "severity" then
+      local cursor = vim.api.nvim_win_get_cursor(state.win)
+      if cursor[1] > 4 then
+        vim.api.nvim_win_set_cursor(state.win, {cursor[1] - 1, 0})
+      end
     elseif (state.mode == "list" or state.mode == "delete") then
       vim.cmd('normal! k')
     end
@@ -262,7 +274,6 @@ local function setup_keymaps()
     callback = function()
       vim.cmd('stopinsert')
       state.mode = "menu"
-      state.selected = 1
       render_menu()
     end
   })
@@ -279,7 +290,6 @@ end
 M.open = function()
   state.buf, state.win = create_window()
   state.mode = "menu"
-  state.selected = 1
 
   setup_keymaps()
   render_menu()
@@ -292,7 +302,6 @@ M.close = function()
   state.buf = nil
   state.win = nil
   state.mode = "menu"
-  state.selected = 1
 end
 
 return M
