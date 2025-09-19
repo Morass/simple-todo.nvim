@@ -6,7 +6,8 @@ local state = {
   win = nil,
   mode = "menu",
   todos = {},
-  selected_severity = nil
+  selected_severity = nil,
+  ns_id = nil
 }
 
 local function create_window()
@@ -67,15 +68,6 @@ local function render_list(delete_mode)
     local symbol = delete_mode and "✗" or severity_info.symbol
     local line = string.format("  %s %s", symbol, todo.text)
     table.insert(lines, line)
-
-    if not delete_mode then
-      vim.api.nvim_buf_add_highlight(state.buf, -1, 'Normal', #lines - 1, 2, 4)
-      vim.api.nvim_buf_add_highlight(state.buf, -1, 'Normal', #lines - 1, 0, -1)
-      vim.api.nvim_buf_set_extmark(state.buf, 0, #lines - 1, 2, {
-        virt_text = {{symbol, {fg = severity_info.color}}},
-        virt_text_pos = 'overlay'
-      })
-    end
   end
 
   if #state.todos == 0 then
@@ -84,6 +76,17 @@ local function render_list(delete_mode)
 
   vim.api.nvim_buf_set_option(state.buf, 'modifiable', true)
   vim.api.nvim_buf_set_lines(state.buf, 0, -1, false, lines)
+
+  -- Apply colors to TODO bullets
+  if not delete_mode then
+    for i, todo in ipairs(state.todos) do
+      local severity_info = data.severities[todo.severity]
+      -- Create highlight group for this severity if not already created
+      vim.api.nvim_set_hl(0, 'SimpleTodo' .. todo.severity, { fg = severity_info.color })
+      vim.api.nvim_buf_add_highlight(state.buf, -1, 'SimpleTodo' .. todo.severity, 3 + i - 1, 2, 4)
+    end
+  end
+
   vim.api.nvim_buf_set_option(state.buf, 'modifiable', false)
 
   if #state.todos > 0 then
@@ -96,11 +99,11 @@ local function render_severity_selection()
     "",
     "  Select TODO Severity:",
     "",
-    "  [ Critical ]     Urgent, must be done ASAP",
-    "  [ Important ]    High priority task",
-    "  [ Medium ]       Normal priority task",
-    "  [ Minor ]        Low priority task",
-    "  [ Nice to Have ] Would be good to do",
+    "  Critical",
+    "  Important",
+    "  Medium",
+    "  Minor",
+    "  Nice to Have",
     "",
     "  Press Enter to select, q to cancel"
   }
@@ -110,13 +113,14 @@ local function render_severity_selection()
   vim.api.nvim_buf_set_option(state.buf, 'modifiable', true)
   vim.api.nvim_buf_set_lines(state.buf, 0, -1, false, lines)
 
+  -- Apply colors to severity names
   for i = 1, 5 do
     local severity_info = data.severities[severity_names[i]]
     vim.api.nvim_buf_add_highlight(state.buf, -1, 'Normal', 2 + i, 0, -1)
-    vim.api.nvim_buf_set_extmark(state.buf, 0, 2 + i, 2, {
-      virt_text = {{"[", "Normal"}, {" " .. severity_names[i]:gsub("_", " "):gsub("^%l", string.upper) .. " ", {fg = severity_info.color}}, {"]", "Normal"}},
-      virt_text_pos = 'overlay'
-    })
+
+    -- Create highlight group for this severity
+    vim.api.nvim_set_hl(0, 'SimpleTodo' .. severity_names[i], { fg = severity_info.color })
+    vim.api.nvim_buf_add_highlight(state.buf, -1, 'SimpleTodo' .. severity_names[i], 2 + i, 2, -1)
   end
 
   vim.api.nvim_buf_set_option(state.buf, 'modifiable', false)
@@ -136,7 +140,7 @@ local function render_text_input()
   vim.api.nvim_buf_set_option(state.buf, 'modifiable', true)
   vim.api.nvim_buf_set_lines(state.buf, 0, -1, false, lines)
 
-  vim.api.nvim_win_set_cursor(state.win, {4, 4})
+  vim.api.nvim_win_set_cursor(state.win, {4, 5})  -- Position after "> "
   vim.cmd('startinsert')
 end
 
@@ -290,6 +294,11 @@ end
 M.open = function()
   state.buf, state.win = create_window()
   state.mode = "menu"
+
+  -- Create namespace for extmarks if needed
+  if not state.ns_id then
+    state.ns_id = vim.api.nvim_create_namespace('simple-todo')
+  end
 
   setup_keymaps()
   render_menu()
