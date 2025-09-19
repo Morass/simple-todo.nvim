@@ -7,7 +7,8 @@ A simple and lightweight TODO management plugin for Neovim.
 ## Features
 
 - Simple popup window for TODO management
-- Severity-based categorization and color coding
+- Severity-based categorization with terminal color coding
+- Color-coded menu options (List=blue, Add=green, Delete=red)
 - Quick add, list, and delete functionality
 - Persistent storage in JSON format
 - Minimal dependencies (pure Lua/Neovim)
@@ -57,8 +58,8 @@ use 'morass/simple-todo.nvim'
 - `q` - Back to menu
 
 **Add TODO:**
-1. Select severity level (Critical, Important, Medium, Minor, Nice to Have)
-2. Type your TODO text
+1. Select severity level (Critical, Important, Medium, Minor, Nice to Have) - each displayed with its color
+2. Type your TODO text directly (no prefix needed)
 3. Press `Enter` to save or `Escape` to cancel
 
 **Delete TODO:**
@@ -86,12 +87,19 @@ require('simple-todo').setup({
 
 ## Severity Levels
 
-TODOs are color-coded by severity:
-- **Critical** (Dark Red) - Urgent tasks
-- **Important** (Yellow) - High priority
-- **Medium** (Green) - Normal priority
-- **Minor** (Gray) - Low priority
-- **Nice to Have** (Blue) - Optional tasks
+TODOs are color-coded by severity using terminal colors:
+- **Critical** (Red, color 196) - Urgent tasks
+- **Important** (Orange, color 214) - High priority
+- **Medium** (Green, color 34) - Normal priority
+- **Minor** (Gray, color 245) - Low priority
+- **Nice to Have** (Blue, color 39) - Optional tasks
+
+## UI Details
+
+- Menu options are color-coded: List (blue), Add (green), Delete (red)
+- Empty state shows "No active TODO(s)" when list is empty
+- Text input starts at the beginning of the line with no prefix
+- All colors use terminal color codes (ctermfg) for compatibility
 
 ## License
 

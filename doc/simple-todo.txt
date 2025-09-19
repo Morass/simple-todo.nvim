@@ -64,27 +64,29 @@ MAIN MENU
   - Press Enter to select an option
   - Press q to close the window
 
-  Options:
-    List    - View all TODOs
-    Add     - Create a new TODO
-    Delete  - Remove existing TODOs
+  Options (color-coded):
+    List    - View all TODOs (blue)
+    Add     - Create a new TODO (green)
+    Delete  - Remove existing TODOs (red)
 
 ADD TODO
   1. Select severity level with j/k and Enter
-  2. Type your TODO text
+  2. Type your TODO text directly (no prefix)
   3. Press Enter to save or Escape to cancel
 
-  Severity levels:
-    Critical     - Urgent tasks (dark red)
-    Important    - High priority (yellow)
-    Medium       - Normal priority (green)
-    Minor        - Low priority (gray)
-    Nice to Have - Optional tasks (blue)
+  Severity levels (with terminal colors):
+    Critical     - Urgent tasks (red, ctermfg=196)
+    Important    - High priority (orange, ctermfg=214)
+    Medium       - Normal priority (green, ctermfg=34)
+    Minor        - Low priority (gray, ctermfg=245)
+    Nice to Have - Optional tasks (blue, ctermfg=39)
 
 LIST VIEW
   - TODOs are sorted by severity and creation time
+  - Each TODO displays with colored bullet matching its severity
   - Use j/k to scroll through the list
   - Press q to return to main menu
+  - Empty list shows "No active TODO(s)"
 
 DELETE MODE
   - Navigate to a TODO with j/k

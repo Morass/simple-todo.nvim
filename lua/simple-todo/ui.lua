@@ -50,6 +50,16 @@ local function render_menu()
 
   vim.api.nvim_buf_set_option(state.buf, 'modifiable', true)
   vim.api.nvim_buf_set_lines(state.buf, 0, -1, false, lines)
+
+  -- Apply colors to menu options
+  vim.api.nvim_set_hl(0, 'SimpleTodoMenuList', { ctermfg = 21 })  -- blue
+  vim.api.nvim_set_hl(0, 'SimpleTodoMenuAdd', { ctermfg = 46 })   -- green
+  vim.api.nvim_set_hl(0, 'SimpleTodoMenuDelete', { ctermfg = 88 }) -- red
+
+  vim.api.nvim_buf_add_highlight(state.buf, -1, 'SimpleTodoMenuList', 3, 4, 10)
+  vim.api.nvim_buf_add_highlight(state.buf, -1, 'SimpleTodoMenuAdd', 4, 4, 9)
+  vim.api.nvim_buf_add_highlight(state.buf, -1, 'SimpleTodoMenuDelete', 5, 4, 12)
+
   vim.api.nvim_buf_set_option(state.buf, 'modifiable', false)
 
   vim.api.nvim_win_set_cursor(state.win, {4, 0})  -- Start at first menu option
@@ -71,7 +81,7 @@ local function render_list(delete_mode)
   end
 
   if #state.todos == 0 then
-    table.insert(lines, "  No todos yet!")
+    table.insert(lines, "  No active TODO(s)")
   end
 
   vim.api.nvim_buf_set_option(state.buf, 'modifiable', true)
@@ -131,7 +141,7 @@ local function render_text_input()
     "",
     "  Enter TODO text:",
     "",
-    "  > ",
+    "  ",
     "",
     "  Press Enter to save, Escape to cancel"
   }
@@ -139,7 +149,7 @@ local function render_text_input()
   vim.api.nvim_buf_set_option(state.buf, 'modifiable', true)
   vim.api.nvim_buf_set_lines(state.buf, 0, -1, false, lines)
 
-  vim.api.nvim_win_set_cursor(state.win, {4, 5})  -- Position after "> "
+  vim.api.nvim_win_set_cursor(state.win, {4, 2})  -- Position at beginning of input line
   vim.cmd('startinsert')
 end
 
@@ -175,7 +185,7 @@ end
 
 local function handle_text_input()
   local line = vim.api.nvim_buf_get_lines(state.buf, 3, 4, false)[1]
-  local text = vim.trim(line:sub(5))  -- Skip "  > " and trim any extra spaces
+  local text = vim.trim(line)  -- Just trim the whole line
 
   if text and text ~= "" then
     data.add_todo(text, state.selected_severity)
