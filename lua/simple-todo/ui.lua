@@ -52,7 +52,7 @@ local function render_menu()
   vim.api.nvim_buf_set_lines(state.buf, 0, -1, false, lines)
 
   -- Apply colors to menu options
-  vim.api.nvim_set_hl(0, 'SimpleTodoMenuList', { ctermfg = 21 })  -- blue
+  vim.api.nvim_set_hl(0, 'SimpleTodoMenuList', { ctermfg = 33 })  -- slightly lighter blue
   vim.api.nvim_set_hl(0, 'SimpleTodoMenuAdd', { ctermfg = 46 })   -- green
   vim.api.nvim_set_hl(0, 'SimpleTodoMenuDelete', { ctermfg = 88 }) -- red
 
