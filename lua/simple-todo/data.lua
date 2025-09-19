@@ -1,11 +1,11 @@
 local M = {}
 
 local severities = {
-  critical = { priority = 1, color = 52, symbol = "●" },
-  important = { priority = 2, color = 178, symbol = "●" },
-  medium = { priority = 3, color = 34, symbol = "●" },
-  minor = { priority = 4, color = 245, symbol = "●" },
-  nice_to_have = { priority = 5, color = 20, symbol = "●" }
+  critical = { priority = 1, color = "#ff0000", symbol = "●" },
+  important = { priority = 2, color = "#ffaa00", symbol = "●" },
+  medium = { priority = 3, color = "#00ff00", symbol = "●" },
+  minor = { priority = 4, color = "#888888", symbol = "●" },
+  nice_to_have = { priority = 5, color = "#0088ff", symbol = "●" }
 }
 
 M.severities = severities

@@ -83,7 +83,7 @@ local function render_list(delete_mode)
       local severity_info = data.severities[todo.severity]
       -- Create highlight group for this severity if not already created
       vim.api.nvim_set_hl(0, 'SimpleTodo' .. todo.severity, { fg = severity_info.color })
-      vim.api.nvim_buf_add_highlight(state.buf, -1, 'SimpleTodo' .. todo.severity, 3 + i - 1, 2, 4)
+      vim.api.nvim_buf_add_highlight(state.buf, -1, 'SimpleTodo' .. todo.severity, 2 + i, 2, 4)
     end
   end
 
@@ -116,7 +116,6 @@ local function render_severity_selection()
   -- Apply colors to severity names
   for i = 1, 5 do
     local severity_info = data.severities[severity_names[i]]
-    vim.api.nvim_buf_add_highlight(state.buf, -1, 'Normal', 2 + i, 0, -1)
 
     -- Create highlight group for this severity
     vim.api.nvim_set_hl(0, 'SimpleTodo' .. severity_names[i], { fg = severity_info.color })
@@ -176,7 +175,7 @@ end
 
 local function handle_text_input()
   local line = vim.api.nvim_buf_get_lines(state.buf, 3, 4, false)[1]
-  local text = line:sub(5)
+  local text = vim.trim(line:sub(5))  -- Skip "  > " and trim any extra spaces
 
   if text and text ~= "" then
     data.add_todo(text, state.selected_severity)
