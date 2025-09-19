@@ -106,6 +106,9 @@ local function render_list(delete_mode)
 
   if #state.todos > 0 then
     vim.api.nvim_win_set_cursor(state.win, {4, 0})
+    -- Debug: verify cursor position
+    local cursor_check = vim.api.nvim_win_get_cursor(state.win)
+    print(string.format("List rendered: cursor set to line %d", cursor_check[1]))
   end
 end
 
@@ -204,7 +207,14 @@ end
 
 local function handle_delete()
   local cursor = vim.api.nvim_win_get_cursor(state.win)
-  local index = cursor[1] - 3  -- Line 4 -> index 1, Line 5 -> index 2, etc.
+  local cursor_line = cursor[1]
+  local index = cursor_line - 3  -- Line 4 -> index 1, Line 5 -> index 2, etc.
+
+  -- Debug info
+  print(string.format("Delete: cursor at line %d, calculated index %d, total todos %d", cursor_line, index, #state.todos))
+  if index > 0 and index <= #state.todos then
+    print(string.format("Deleting TODO %d: '%s'", index, state.todos[index].text))
+  end
 
   if index > 0 and index <= #state.todos then
     data.delete_todo(index)
