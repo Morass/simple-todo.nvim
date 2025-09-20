@@ -41,12 +41,7 @@ M.set_original_file_path = function(path)
 end
 
 local function get_todo_file()
-  -- Check if user has explicitly set a file path
-  if vim.g.simple_todo_file then
-    return vim.g.simple_todo_file
-  end
-
-  -- Check if we're in a git repository
+  -- Priority 1: Check if we're in a git repository with .simple_todos.json
   local git_root = get_git_root()
   if git_root then
     local repo_todo_file = git_root .. '/.simple_todos.json'
@@ -56,7 +51,12 @@ local function get_todo_file()
     end
   end
 
-  -- Fall back to the global todo file
+  -- Priority 2: Check if user has explicitly set a file path
+  if vim.g.simple_todo_file then
+    return vim.g.simple_todo_file
+  end
+
+  -- Priority 3: Fall back to the global todo file
   return vim.fn.stdpath('data') .. '/simple-todo.json'
 end
 
