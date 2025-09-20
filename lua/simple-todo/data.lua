@@ -157,4 +157,9 @@ end
 
 M.sort_todos = sort_todos
 
+-- Debug function to check which file is being used
+M.get_current_todo_file = function()
+  return get_todo_file()
+end
+
 return M
