@@ -13,4 +13,16 @@ M.toggle = function()
   ui.toggle()
 end
 
+M.list = function()
+  ui.open_list()
+end
+
+M.add = function()
+  ui.open_add()
+end
+
+M.delete = function()
+  ui.open_delete()
+end
+
 return M

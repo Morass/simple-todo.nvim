@@ -13,3 +13,6 @@ endif
 
 " Commands
 command! SimpleTodoToggle lua require('simple-todo').toggle()
+command! SimpleTodoList lua require('simple-todo').list()
+command! SimpleTodoAdd lua require('simple-todo').add()
+command! SimpleTodoDelete lua require('simple-todo').delete()

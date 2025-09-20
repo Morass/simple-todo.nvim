@@ -336,4 +336,40 @@ M.close = function()
   state.mode = "menu"
 end
 
+M.open_list = function()
+  state.buf, state.win = create_window()
+  state.mode = "list"
+
+  if not state.ns_id then
+    state.ns_id = vim.api.nvim_create_namespace('simple-todo')
+  end
+
+  setup_keymaps()
+  render_list(false)
+end
+
+M.open_add = function()
+  state.buf, state.win = create_window()
+  state.mode = "severity"
+
+  if not state.ns_id then
+    state.ns_id = vim.api.nvim_create_namespace('simple-todo')
+  end
+
+  setup_keymaps()
+  render_severity_selection()
+end
+
+M.open_delete = function()
+  state.buf, state.win = create_window()
+  state.mode = "delete"
+
+  if not state.ns_id then
+    state.ns_id = vim.api.nvim_create_namespace('simple-todo')
+  end
+
+  setup_keymaps()
+  render_list(true)
+end
+
 return M

@@ -10,8 +10,38 @@ local severities = {
 
 M.severities = severities
 
+local function get_git_root()
+  local handle = io.popen("git rev-parse --show-toplevel 2>/dev/null")
+  if handle then
+    local result = handle:read("*l")
+    handle:close()
+    if result and result ~= "" then
+      return result
+    end
+  end
+  return nil
+end
+
 local function get_todo_file()
-  return vim.g.simple_todo_file or (vim.fn.stdpath('data') .. '/simple-todo.json')
+  -- Check if user has explicitly set a file path
+  if vim.g.simple_todo_file then
+    return vim.g.simple_todo_file
+  end
+
+  -- Check if we're in a git repository
+  local git_root = get_git_root()
+  if git_root then
+    local repo_todo_file = git_root .. '/.simple_todos.json'
+    -- Check if the repo-specific file exists
+    local file = io.open(repo_todo_file, "r")
+    if file then
+      file:close()
+      return repo_todo_file
+    end
+  end
+
+  -- Fall back to the global todo file
+  return vim.fn.stdpath('data') .. '/simple-todo.json'
 end
 
 M.load_todos = function()
@@ -38,6 +68,24 @@ end
 
 M.save_todos = function(todos)
   local file_path = get_todo_file()
+
+  -- If we're in a git repo and no repo-specific file exists yet,
+  -- and no explicit path was set, create the repo-specific file
+  if not vim.g.simple_todo_file then
+    local git_root = get_git_root()
+    if git_root then
+      local repo_todo_file = git_root .. '/.simple_todos.json'
+      -- Check if the repo-specific file doesn't exist yet
+      local check_file = io.open(repo_todo_file, "r")
+      if not check_file then
+        -- Use the repo-specific path for new saves
+        file_path = repo_todo_file
+      else
+        check_file:close()
+      end
+    end
+  end
+
   local file = io.open(file_path, "w")
   if not file then
     vim.notify("Failed to save todos", vim.log.levels.ERROR)
