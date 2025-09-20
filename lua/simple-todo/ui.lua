@@ -51,7 +51,6 @@ local function render_menu()
   vim.api.nvim_buf_set_option(state.buf, 'modifiable', true)
   vim.api.nvim_buf_set_lines(state.buf, 0, -1, false, lines)
 
-  -- Apply colors to menu options
   vim.api.nvim_set_hl(0, 'SimpleTodoMenuList', { ctermfg = 33 })  -- slightly lighter blue
   vim.api.nvim_set_hl(0, 'SimpleTodoMenuAdd', { ctermfg = 46 })   -- green
   vim.api.nvim_set_hl(0, 'SimpleTodoMenuDelete', { ctermfg = 88 }) -- red
@@ -62,7 +61,7 @@ local function render_menu()
 
   vim.api.nvim_buf_set_option(state.buf, 'modifiable', false)
 
-  vim.api.nvim_win_set_cursor(state.win, {4, 0})  -- Start at first menu option
+  vim.api.nvim_win_set_cursor(state.win, {4, 0})
 end
 
 local function render_list_with_todos(delete_mode, todos)
@@ -87,17 +86,14 @@ local function render_list_with_todos(delete_mode, todos)
   vim.api.nvim_buf_set_option(state.buf, 'modifiable', true)
   vim.api.nvim_buf_set_lines(state.buf, 0, -1, false, lines)
 
-  -- Apply colors to TODO bullets or delete crosses (both use severity colors)
   for i, todo in ipairs(state.todos) do
     local severity_info = data.severities[todo.severity]
     -- Create highlight group for this severity if not already created
     vim.api.nvim_set_hl(0, 'SimpleTodo' .. todo.severity, { ctermfg = severity_info.color })
 
     if delete_mode then
-      -- Color the cross with severity color (TODO index i is at line 3+i, but highlight is 0-indexed)
       vim.api.nvim_buf_add_highlight(state.buf, -1, 'SimpleTodo' .. todo.severity, 3 + i - 1, 2, 3)
     else
-      -- Color the bullet with severity color (TODO index i is at line 3+i, but highlight is 0-indexed)
       vim.api.nvim_buf_add_highlight(state.buf, -1, 'SimpleTodo' .. todo.severity, 3 + i - 1, 2, 4)
     end
   end
@@ -132,17 +128,15 @@ local function render_severity_selection()
   vim.api.nvim_buf_set_option(state.buf, 'modifiable', true)
   vim.api.nvim_buf_set_lines(state.buf, 0, -1, false, lines)
 
-  -- Apply colors to severity names
   for i = 1, 5 do
     local severity_info = data.severities[severity_names[i]]
 
-    -- Create highlight group for this severity
     vim.api.nvim_set_hl(0, 'SimpleTodo' .. severity_names[i], { ctermfg = severity_info.color })
     vim.api.nvim_buf_add_highlight(state.buf, -1, 'SimpleTodo' .. severity_names[i], 2 + i, 2, -1)
   end
 
   vim.api.nvim_buf_set_option(state.buf, 'modifiable', false)
-  vim.api.nvim_win_set_cursor(state.win, {4, 0})  -- Start at first severity option
+  vim.api.nvim_win_set_cursor(state.win, {4, 0})
 end
 
 local function render_text_input()
@@ -158,7 +152,7 @@ local function render_text_input()
   vim.api.nvim_buf_set_option(state.buf, 'modifiable', true)
   vim.api.nvim_buf_set_lines(state.buf, 0, -1, false, lines)
 
-  vim.api.nvim_win_set_cursor(state.win, {4, 2})  -- Position at beginning of input line
+  vim.api.nvim_win_set_cursor(state.win, {4, 2})
   vim.cmd('startinsert')
 end
 
@@ -166,7 +160,6 @@ local function handle_menu_select()
   local cursor = vim.api.nvim_win_get_cursor(state.win)
   local row = cursor[1]
 
-  -- Menu options are on lines 4, 5, 6
   if row == 4 then
     state.mode = "list"
     render_list(false)
@@ -183,7 +176,6 @@ local function handle_severity_select()
   local cursor = vim.api.nvim_win_get_cursor(state.win)
   local row = cursor[1]
 
-  -- Severity options are on lines 4-8
   if row >= 4 and row <= 8 then
     local severity_names = {"critical", "important", "medium", "minor", "nice_to_have"}
     state.selected_severity = severity_names[row - 3]
@@ -194,7 +186,7 @@ end
 
 local function handle_text_input()
   local line = vim.api.nvim_buf_get_lines(state.buf, 3, 4, false)[1]
-  local text = vim.trim(line)  -- Just trim the whole line
+  local text = vim.trim(line)
 
   if text and text ~= "" then
     data.add_todo(text, state.selected_severity)
@@ -208,7 +200,7 @@ end
 
 local function handle_delete()
   local cursor = vim.api.nvim_win_get_cursor(state.win)
-  local index = cursor[1] - 3  -- Line 4 -> index 1, Line 5 -> index 2, etc.
+  local index = cursor[1] - 3
 
   if index > 0 and index <= #state.todos then
     local todo_to_delete = state.todos[index]
@@ -315,13 +307,11 @@ M.toggle = function()
 end
 
 M.open = function()
-  -- Capture the current file path before creating the window
   data.set_original_file_path(vim.fn.expand('%:p'))
 
   state.buf, state.win = create_window()
   state.mode = "menu"
 
-  -- Create namespace for extmarks if needed
   if not state.ns_id then
     state.ns_id = vim.api.nvim_create_namespace('simple-todo')
   end
@@ -340,7 +330,6 @@ M.close = function()
 end
 
 M.open_list = function()
-  -- Capture the current file path before creating the window
   data.set_original_file_path(vim.fn.expand('%:p'))
 
   state.buf, state.win = create_window()
@@ -355,7 +344,6 @@ M.open_list = function()
 end
 
 M.open_add = function()
-  -- Capture the current file path before creating the window
   data.set_original_file_path(vim.fn.expand('%:p'))
 
   state.buf, state.win = create_window()
@@ -370,7 +358,6 @@ M.open_add = function()
 end
 
 M.open_delete = function()
-  -- Capture the current file path before creating the window
   data.set_original_file_path(vim.fn.expand('%:p'))
 
   state.buf, state.win = create_window()
