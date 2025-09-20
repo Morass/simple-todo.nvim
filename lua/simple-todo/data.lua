@@ -158,21 +158,45 @@ M.sort_todos = sort_todos
 
 -- Debug function to check which file is being used
 M.get_current_todo_file = function()
-  local result = get_todo_file()
-  -- Debug info
+  -- Debug info BEFORE calling get_todo_file
+  local current_file = original_file_path or vim.fn.expand('%:p')
+  print("\n=== TODO File Debug ===")
+  print("Current buffer file: " .. vim.fn.expand('%:p'))
+  print("Original file path stored: " .. (original_file_path or "none"))
+  print("Will check from file: " .. (current_file ~= '' and current_file or "none"))
+
   local git_root = get_git_root()
-  local repo_file = git_root and (git_root .. '/.simple_todos.json') or 'none'
-  local repo_exists = git_root and vim.fn.filereadable(repo_file) or 0
+  local repo_file = git_root and (git_root .. '/.simple_todos.json') or nil
+  local repo_exists = repo_file and vim.fn.filereadable(repo_file) or 0
 
-  print("=== TODO File Debug ===")
-  print("Original file: " .. (original_file_path or "none"))
-  print("Git root: " .. (git_root or "none"))
-  print("Repo file: " .. repo_file)
-  print("Repo file exists: " .. repo_exists)
-  print("g:simple_todo_file: " .. (vim.g.simple_todo_file or "not set"))
-  print("Using: " .. result)
-  print("======================")
+  print("Git root detected: " .. (git_root or "none"))
+  if repo_file then
+    print("Repo file path: " .. repo_file)
+    print("Repo file exists: " .. (repo_exists == 1 and "YES" or "NO"))
+  else
+    print("Repo file: none (not in git repo)")
+  end
 
+  print("g:simple_todo_file set to: " .. (vim.g.simple_todo_file or "not set"))
+
+  -- Now call the actual function
+  local result = get_todo_file()
+  print("\nFINAL DECISION: " .. result)
+
+  -- Explain why this file was chosen
+  if repo_file and repo_exists == 1 then
+    if result == repo_file then
+      print("✓ Using repo file (highest priority)")
+    else
+      print("✗ ERROR: Should be using repo file but using something else!")
+    end
+  elseif vim.g.simple_todo_file and result == vim.g.simple_todo_file then
+    print("✓ Using custom g:simple_todo_file (repo file doesn't exist)")
+  elseif result == vim.fn.stdpath('data') .. '/simple-todo.json' then
+    print("✓ Using global default (no repo file, no custom setting)")
+  end
+
+  print("======================\n")
   return result
 end
 
