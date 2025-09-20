@@ -52,6 +52,9 @@ use 'morass/simple-todo.nvim'
 ### Commands
 
 - `:SimpleTodoToggle` - Open/close the TODO manager window
+- `:SimpleTodoList` - Open the TODO manager directly in list view
+- `:SimpleTodoAdd` - Open the TODO manager directly in add mode
+- `:SimpleTodoDelete` - Open the TODO manager directly in delete mode
 
 ### Key Bindings
 
@@ -63,9 +66,15 @@ use 'morass/simple-todo.nvim'
 
 ## Configuration
 
-### Custom TODO storage location
+### TODO Storage Location
 
-By default, TODOs are stored in Neovim's data directory. You can customize this:
+The plugin uses a smart storage system that automatically determines where to save your TODOs, with the following priority order:
+
+1. **Repository-specific storage** (highest priority): If you're editing a file in a git repository and `.simple_todos.json` exists in the repository root, it will always be used. This ensures project-specific TODOs are always preferred.
+
+2. **Custom location** (medium priority): If you've set `g:simple_todo_file`, it will be used when no repository-specific file exists.
+
+3. **Global storage** (lowest priority): When not in a git repository or if no `.simple_todos.json` exists in the repo, TODOs are stored in Neovim's data directory at `~/.local/share/nvim/simple-todo.json` (location varies by OS).
 
 ```vim
 let g:simple_todo_file = '/path/to/your/todos.json'
@@ -78,6 +87,13 @@ require('simple-todo').setup({
   file = '/path/to/your/todos.json'
 })
 ```
+
+### Repository-specific TODOs
+
+To use repository-specific TODOs:
+- Simply create your first TODO while in a git repository - the plugin will automatically create `.simple_todos.json` in the repository root
+- Add `.simple_todos.json` to `.gitignore` if you want to keep TODOs local
+- Or commit `.simple_todos.json` to share project TODOs with your team
 
 ## Severity Levels
 

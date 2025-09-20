@@ -10,8 +10,44 @@ local severities = {
 
 M.severities = severities
 
+local original_file_path = nil
+
+local function get_git_root()
+  local current_file = original_file_path or vim.fn.expand('%:p')
+
+  if current_file and current_file ~= '' then
+    local file_dir = vim.fn.fnamemodify(current_file, ':h')
+    local handle = io.popen('cd "' .. file_dir .. '" && git rev-parse --show-toplevel 2>/dev/null')
+    if handle then
+      local result = handle:read("*l")
+      handle:close()
+      if result and result ~= "" then
+        return result
+      end
+    end
+  end
+
+  return nil
+end
+
+M.set_original_file_path = function(path)
+  original_file_path = path
+end
+
 local function get_todo_file()
-  return vim.g.simple_todo_file or (vim.fn.stdpath('data') .. '/simple-todo.json')
+  local git_root = get_git_root()
+  if git_root then
+    local repo_todo_file = git_root .. '/.simple_todos.json'
+    if vim.fn.filereadable(repo_todo_file) == 1 then
+      return repo_todo_file
+    end
+  end
+
+  if vim.g.simple_todo_file then
+    return vim.g.simple_todo_file
+  end
+
+  return vim.fn.stdpath('data') .. '/simple-todo.json'
 end
 
 M.load_todos = function()
@@ -38,6 +74,17 @@ end
 
 M.save_todos = function(todos)
   local file_path = get_todo_file()
+
+  if not vim.g.simple_todo_file then
+    local git_root = get_git_root()
+    if git_root then
+      local repo_todo_file = git_root .. '/.simple_todos.json'
+      if vim.fn.filereadable(repo_todo_file) == 0 then
+        file_path = repo_todo_file
+      end
+    end
+  end
+
   local file = io.open(file_path, "w")
   if not file then
     vim.notify("Failed to save todos", vim.log.levels.ERROR)
@@ -61,18 +108,17 @@ end
 M.delete_todo = function(todo_to_delete)
   local todos = M.load_todos()
 
-  -- Find the TODO in the original array by matching text, severity, and created time
   for i, todo in ipairs(todos) do
     if todo.text == todo_to_delete.text and
        todo.severity == todo_to_delete.severity and
        todo.created == todo_to_delete.created then
       table.remove(todos, i)
       M.save_todos(todos)
-      return true, todos -- Return the updated list to avoid re-reading
+      return true, todos
     end
   end
 
-  return false, nil -- TODO not found
+  return false, nil
 end
 
 local function sort_todos(todos)
