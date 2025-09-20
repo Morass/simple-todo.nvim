@@ -11,7 +11,25 @@ local severities = {
 M.severities = severities
 
 local function get_git_root()
-  local handle = io.popen("git rev-parse --show-toplevel 2>/dev/null")
+  -- Try to get git root from the current buffer's file path
+  local current_file = vim.fn.expand('%:p')
+  local cwd = vim.fn.getcwd()
+
+  -- First try from the current file's directory
+  if current_file ~= '' then
+    local file_dir = vim.fn.fnamemodify(current_file, ':h')
+    local handle = io.popen('cd "' .. file_dir .. '" && git rev-parse --show-toplevel 2>/dev/null')
+    if handle then
+      local result = handle:read("*l")
+      handle:close()
+      if result and result ~= "" then
+        return result
+      end
+    end
+  end
+
+  -- Fall back to checking from current working directory
+  local handle = io.popen('cd "' .. cwd .. '" && git rev-parse --show-toplevel 2>/dev/null')
   if handle then
     local result = handle:read("*l")
     handle:close()
@@ -19,6 +37,7 @@ local function get_git_root()
       return result
     end
   end
+
   return nil
 end
 
@@ -32,10 +51,8 @@ local function get_todo_file()
   local git_root = get_git_root()
   if git_root then
     local repo_todo_file = git_root .. '/.simple_todos.json'
-    -- Check if the repo-specific file exists
-    local file = io.open(repo_todo_file, "r")
-    if file then
-      file:close()
+    -- Check if the repo-specific file exists using Vim's filereadable
+    if vim.fn.filereadable(repo_todo_file) == 1 then
       return repo_todo_file
     end
   end
@@ -76,12 +93,9 @@ M.save_todos = function(todos)
     if git_root then
       local repo_todo_file = git_root .. '/.simple_todos.json'
       -- Check if the repo-specific file doesn't exist yet
-      local check_file = io.open(repo_todo_file, "r")
-      if not check_file then
+      if vim.fn.filereadable(repo_todo_file) == 0 then
         -- Use the repo-specific path for new saves
         file_path = repo_todo_file
-      else
-        check_file:close()
       end
     end
   end

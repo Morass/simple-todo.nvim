@@ -3,3 +3,4 @@
 *.swo
 *~
 tags
+.simple_todos.json
