@@ -158,7 +158,22 @@ M.sort_todos = sort_todos
 
 -- Debug function to check which file is being used
 M.get_current_todo_file = function()
-  return get_todo_file()
+  local result = get_todo_file()
+  -- Debug info
+  local git_root = get_git_root()
+  local repo_file = git_root and (git_root .. '/.simple_todos.json') or 'none'
+  local repo_exists = git_root and vim.fn.filereadable(repo_file) or 0
+
+  print("=== TODO File Debug ===")
+  print("Original file: " .. (original_file_path or "none"))
+  print("Git root: " .. (git_root or "none"))
+  print("Repo file: " .. repo_file)
+  print("Repo file exists: " .. repo_exists)
+  print("g:simple_todo_file: " .. (vim.g.simple_todo_file or "not set"))
+  print("Using: " .. result)
+  print("======================")
+
+  return result
 end
 
 return M
