@@ -10,13 +10,16 @@ local severities = {
 
 M.severities = severities
 
-local function get_git_root()
-  -- Try to get git root from the current buffer's file path
-  local current_file = vim.fn.expand('%:p')
-  local cwd = vim.fn.getcwd()
+-- Store the original buffer's file path when the module loads
+-- This will be updated each time before we open the UI
+local original_file_path = nil
 
-  -- First try from the current file's directory
-  if current_file ~= '' then
+local function get_git_root()
+  -- Use the stored original file path if available, otherwise try current buffer
+  local current_file = original_file_path or vim.fn.expand('%:p')
+
+  -- Only try from the file's directory if we have a valid file
+  if current_file and current_file ~= '' then
     local file_dir = vim.fn.fnamemodify(current_file, ':h')
     local handle = io.popen('cd "' .. file_dir .. '" && git rev-parse --show-toplevel 2>/dev/null')
     if handle then
@@ -28,17 +31,13 @@ local function get_git_root()
     end
   end
 
-  -- Fall back to checking from current working directory
-  local handle = io.popen('cd "' .. cwd .. '" && git rev-parse --show-toplevel 2>/dev/null')
-  if handle then
-    local result = handle:read("*l")
-    handle:close()
-    if result and result ~= "" then
-      return result
-    end
-  end
-
+  -- No file-based git root found
   return nil
+end
+
+-- Function to update the original file path (called before opening UI)
+M.set_original_file_path = function(path)
+  original_file_path = path
 end
 
 local function get_todo_file()

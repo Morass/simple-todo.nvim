@@ -315,6 +315,9 @@ M.toggle = function()
 end
 
 M.open = function()
+  -- Capture the current file path before creating the window
+  data.set_original_file_path(vim.fn.expand('%:p'))
+
   state.buf, state.win = create_window()
   state.mode = "menu"
 
@@ -337,6 +340,9 @@ M.close = function()
 end
 
 M.open_list = function()
+  -- Capture the current file path before creating the window
+  data.set_original_file_path(vim.fn.expand('%:p'))
+
   state.buf, state.win = create_window()
   state.mode = "list"
 
@@ -349,6 +355,9 @@ M.open_list = function()
 end
 
 M.open_add = function()
+  -- Capture the current file path before creating the window
+  data.set_original_file_path(vim.fn.expand('%:p'))
+
   state.buf, state.win = create_window()
   state.mode = "severity"
 
@@ -361,6 +370,9 @@ M.open_add = function()
 end
 
 M.open_delete = function()
+  -- Capture the current file path before creating the window
+  data.set_original_file_path(vim.fn.expand('%:p'))
+
   state.buf, state.win = create_window()
   state.mode = "delete"
 
