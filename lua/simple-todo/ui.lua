@@ -249,6 +249,7 @@ local function handle_menu_select()
 
   if row == 4 then
     state.mode = "list"
+    state.filter_tags = {}
     render_list(false)
   elseif row == 5 then
     state.mode = "severity"
@@ -396,6 +397,7 @@ local function setup_keymaps()
       render_list(false)
     else
       state.mode = "menu"
+      state.filter_tags = {}
       render_menu()
     end
   end)
@@ -558,6 +560,7 @@ M.open_list = function()
 
   state.buf, state.win = create_window()
   state.mode = "list"
+  state.filter_tags = {}
 
   if not state.ns_id then
     state.ns_id = vim.api.nvim_create_namespace('simple-todo')
@@ -572,6 +575,7 @@ M.open_add = function()
 
   state.buf, state.win = create_window()
   state.mode = "severity"
+  state.filter_tags = {}
 
   if not state.ns_id then
     state.ns_id = vim.api.nvim_create_namespace('simple-todo')
@@ -586,6 +590,7 @@ M.open_delete = function()
 
   state.buf, state.win = create_window()
   state.mode = "delete"
+  state.filter_tags = {}
 
   if not state.ns_id then
     state.ns_id = vim.api.nvim_create_namespace('simple-todo')
