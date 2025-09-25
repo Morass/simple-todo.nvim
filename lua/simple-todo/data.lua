@@ -121,6 +121,22 @@ M.delete_todo = function(todo_to_delete)
   return false, nil
 end
 
+M.edit_todo = function(todo_to_edit, new_text)
+  local todos = M.load_todos()
+
+  for i, todo in ipairs(todos) do
+    if todo.text == todo_to_edit.text and
+       todo.severity == todo_to_edit.severity and
+       todo.created == todo_to_edit.created then
+      todos[i].text = new_text
+      M.save_todos(todos)
+      return true
+    end
+  end
+
+  return false
+end
+
 local function sort_todos(todos)
   table.sort(todos, function(a, b)
     local a_priority = severities[a.severity].priority

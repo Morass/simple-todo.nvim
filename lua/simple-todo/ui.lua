@@ -7,7 +7,8 @@ local state = {
   mode = "menu",
   todos = {},
   selected_severity = nil,
-  ns_id = nil
+  ns_id = nil,
+  edit_todo = nil
 }
 
 local function create_window()
@@ -68,7 +69,7 @@ local function render_list_with_todos(delete_mode, todos)
   state.todos = todos or data.get_sorted_todos()
   local lines = {
     "",
-    delete_mode and "  Delete TODO (press 'd' to delete, q to go back)" or "  TODO List (press q to go back)",
+    delete_mode and "  Delete TODO (press 'd' to delete, q to go back)" or "  TODO List (press 'e' to edit, q to go back)",
     ""
   }
 
@@ -142,9 +143,9 @@ end
 local function render_text_input()
   local lines = {
     "",
-    "  Enter TODO text:",
+    state.edit_todo and "  Edit TODO text:" or "  Enter TODO text:",
     "",
-    "  ",
+    state.edit_todo and ("  " .. state.edit_todo.text) or "  ",
     "",
     "  Press Enter to save, Escape to cancel"
   }
@@ -152,7 +153,8 @@ local function render_text_input()
   vim.api.nvim_buf_set_option(state.buf, 'modifiable', true)
   vim.api.nvim_buf_set_lines(state.buf, 0, -1, false, lines)
 
-  vim.api.nvim_win_set_cursor(state.win, {4, 2})
+  local cursor_col = state.edit_todo and (2 + #state.edit_todo.text) or 2
+  vim.api.nvim_win_set_cursor(state.win, {4, cursor_col})
   vim.cmd('startinsert')
 end
 
@@ -189,7 +191,17 @@ local function handle_text_input()
   local text = vim.trim(line)
 
   if text and text ~= "" then
-    data.add_todo(text, state.selected_severity)
+    if state.edit_todo then
+      data.edit_todo(state.edit_todo, text)
+      state.edit_todo = nil
+      vim.cmd('stopinsert')
+      vim.api.nvim_buf_set_option(state.buf, 'modifiable', false)
+      state.mode = "list"
+      render_list(false)
+      return
+    else
+      data.add_todo(text, state.selected_severity)
+    end
   end
 
   vim.cmd('stopinsert')
@@ -209,6 +221,17 @@ local function handle_delete()
       state.todos = data.sort_todos(updated_todos)
       render_list_with_todos(true, state.todos)
     end
+  end
+end
+
+local function handle_edit()
+  local cursor = vim.api.nvim_win_get_cursor(state.win)
+  local index = cursor[1] - 3
+
+  if index > 0 and index <= #state.todos then
+    state.edit_todo = state.todos[index]
+    state.mode = "input"
+    render_text_input()
   end
 end
 
@@ -276,6 +299,12 @@ local function setup_keymaps()
     end
   end)
 
+  map('e', function()
+    if state.mode == "list" then
+      handle_edit()
+    end
+  end)
+
   vim.api.nvim_buf_set_keymap(state.buf, 'i', '<CR>', '', {
     noremap = true,
     silent = true,
@@ -292,8 +321,14 @@ local function setup_keymaps()
     callback = function()
       vim.cmd('stopinsert')
       vim.api.nvim_buf_set_option(state.buf, 'modifiable', false)
-      state.mode = "menu"
-      render_menu()
+      if state.edit_todo then
+        state.edit_todo = nil
+        state.mode = "list"
+        render_list(false)
+      else
+        state.mode = "menu"
+        render_menu()
+      end
     end
   })
 end
