@@ -138,6 +138,19 @@ M.edit_todo = function(todo_to_edit, new_text)
   return false
 end
 
+local function sort_todos(todos)
+  table.sort(todos, function(a, b)
+    local a_priority = severities[a.severity].priority
+    local b_priority = severities[b.severity].priority
+
+    if a_priority == b_priority then
+      return a.created > b.created
+    end
+    return a_priority < b_priority
+  end)
+  return todos
+end
+
 M.edit_todo_tags = function(todo_to_edit, new_tags)
   local todos = M.load_todos()
 
@@ -191,19 +204,6 @@ M.filter_todos_by_tag = function(tag_filter)
   end
 
   return sort_todos(filtered)
-end
-
-local function sort_todos(todos)
-  table.sort(todos, function(a, b)
-    local a_priority = severities[a.severity].priority
-    local b_priority = severities[b.severity].priority
-
-    if a_priority == b_priority then
-      return a.created > b.created
-    end
-    return a_priority < b_priority
-  end)
-  return todos
 end
 
 M.get_sorted_todos = function()

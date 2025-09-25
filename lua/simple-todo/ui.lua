@@ -74,7 +74,7 @@ local function render_list_with_todos(delete_mode, todos)
   if delete_mode then
     header = "  Delete TODO (press 'd' to delete, 'q' to go back)"
   elseif state.filter_tag then
-    header = "  TODO List - Filtered by: " .. state.filter_tag .. " (press 'q' to go back)"
+    header = "  Filtered by: " .. state.filter_tag .. " ('e' edit, 't' tags, 'f' more filters, 'q' clear filter)"
   else
     header = "  TODO List (press 'e' to edit, 't' for tags, 'f' to filter, 'q' to go back)"
   end
@@ -260,7 +260,12 @@ local function handle_text_input()
       vim.cmd('stopinsert')
       vim.api.nvim_buf_set_option(state.buf, 'modifiable', false)
       state.mode = "list"
-      render_list(false)
+      if state.filter_tag then
+        local filtered_todos = data.filter_todos_by_tag(state.filter_tag)
+        render_list_with_todos(false, filtered_todos)
+      else
+        render_list(false)
+      end
       return
     else
       data.add_todo(text, state.selected_severity)
@@ -331,7 +336,12 @@ local function handle_tag_input()
   vim.cmd('stopinsert')
   vim.api.nvim_buf_set_option(state.buf, 'modifiable', false)
   state.mode = "list"
-  render_list(false)
+  if state.filter_tag then
+    local filtered_todos = data.filter_todos_by_tag(state.filter_tag)
+    render_list_with_todos(false, filtered_todos)
+  else
+    render_list(false)
+  end
 end
 
 local function handle_filter_select()
@@ -440,7 +450,7 @@ local function setup_keymaps()
   end)
 
   map('f', function()
-    if state.mode == "list" and not state.filter_tag then
+    if state.mode == "list" then
       state.mode = "filter"
       render_filter_selection()
     end
@@ -467,11 +477,21 @@ local function setup_keymaps()
       if state.edit_todo then
         state.edit_todo = nil
         state.mode = "list"
-        render_list(false)
+        if state.filter_tag then
+          local filtered_todos = data.filter_todos_by_tag(state.filter_tag)
+          render_list_with_todos(false, filtered_todos)
+        else
+          render_list(false)
+        end
       elseif state.tag_todo then
         state.tag_todo = nil
         state.mode = "list"
-        render_list(false)
+        if state.filter_tag then
+          local filtered_todos = data.filter_todos_by_tag(state.filter_tag)
+          render_list_with_todos(false, filtered_todos)
+        else
+          render_list(false)
+        end
       else
         state.mode = "menu"
         render_menu()
