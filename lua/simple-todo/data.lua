@@ -206,6 +206,55 @@ M.filter_todos_by_tag = function(tag_filter)
   return sort_todos(filtered)
 end
 
+M.filter_todos_by_tags = function(tag_filters)
+  local todos = M.load_todos()
+  local filtered = {}
+
+  for _, todo in ipairs(todos) do
+    if todo.tags then
+      local has_all_tags = true
+      for _, filter_tag in ipairs(tag_filters) do
+        local has_tag = false
+        for _, todo_tag in ipairs(todo.tags) do
+          if todo_tag == filter_tag then
+            has_tag = true
+            break
+          end
+        end
+        if not has_tag then
+          has_all_tags = false
+          break
+        end
+      end
+      if has_all_tags then
+        table.insert(filtered, todo)
+      end
+    end
+  end
+
+  return sort_todos(filtered)
+end
+
+M.get_tags_from_todos = function(todos)
+  local tag_set = {}
+
+  for _, todo in ipairs(todos) do
+    if todo.tags then
+      for _, tag in ipairs(todo.tags) do
+        tag_set[tag] = true
+      end
+    end
+  end
+
+  local tags = {}
+  for tag, _ in pairs(tag_set) do
+    table.insert(tags, tag)
+  end
+
+  table.sort(tags)
+  return tags
+end
+
 M.get_sorted_todos = function()
   local todos = M.load_todos()
   return sort_todos(todos)

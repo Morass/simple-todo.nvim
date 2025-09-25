@@ -11,7 +11,7 @@ local state = {
   edit_todo = nil,
   tag_todo = nil,
   all_tags = {},
-  filter_tag = nil
+  filter_tags = {}
 }
 
 local function create_window()
@@ -73,8 +73,8 @@ local function render_list_with_todos(delete_mode, todos)
   local header = ""
   if delete_mode then
     header = "  Delete TODO (press 'd' to delete, 'q' to go back)"
-  elseif state.filter_tag then
-    header = "  Filtered by: " .. state.filter_tag .. " ('e' edit, 't' tags, 'f' more filters, 'q' clear filter)"
+  elseif #state.filter_tags > 0 then
+    header = "  Filtered by: [" .. table.concat(state.filter_tags, " + ") .. "] ('e' edit, 't' tags, 'f' add filter, 'q' clear)"
   else
     header = "  TODO List (press 'e' to edit, 't' for tags, 'f' to filter, 'q' to go back)"
   end
@@ -195,30 +195,52 @@ end
 local function render_filter_selection()
   local lines = {
     "",
-    "  Select Tag to Filter:",
+    #state.filter_tags > 0 and "  Add another filter:" or "  Select Tag to Filter:",
     "",
   }
 
-  state.all_tags = data.get_all_tags()
-
-  if #state.all_tags == 0 then
-    table.insert(lines, "  No tags found")
+  -- Get tags from currently displayed todos (filtered or all)
+  if #state.filter_tags > 0 then
+    state.all_tags = data.get_tags_from_todos(state.todos)
   else
-    for _, tag in ipairs(state.all_tags) do
+    state.all_tags = data.get_all_tags()
+  end
+
+  -- Remove already applied filters from the list
+  local available_tags = {}
+  for _, tag in ipairs(state.all_tags) do
+    local already_filtered = false
+    for _, filter_tag in ipairs(state.filter_tags) do
+      if tag == filter_tag then
+        already_filtered = true
+        break
+      end
+    end
+    if not already_filtered then
+      table.insert(available_tags, tag)
+    end
+  end
+
+  if #available_tags == 0 then
+    table.insert(lines, "  No additional tags available")
+  else
+    for _, tag in ipairs(available_tags) do
       table.insert(lines, "  " .. tag)
     end
   end
 
   table.insert(lines, "")
-  table.insert(lines, "  Press Enter to filter, 'q' to go back")
+  table.insert(lines, "  Press Enter to add filter, 'q' to go back")
 
   vim.api.nvim_buf_set_option(state.buf, 'modifiable', true)
   vim.api.nvim_buf_set_lines(state.buf, 0, -1, false, lines)
   vim.api.nvim_buf_set_option(state.buf, 'modifiable', false)
 
-  if #state.all_tags > 0 then
+  if #available_tags > 0 then
     vim.api.nvim_win_set_cursor(state.win, {4, 0})
   end
+
+  state.all_tags = available_tags
 end
 
 local function handle_menu_select()
@@ -260,8 +282,8 @@ local function handle_text_input()
       vim.cmd('stopinsert')
       vim.api.nvim_buf_set_option(state.buf, 'modifiable', false)
       state.mode = "list"
-      if state.filter_tag then
-        local filtered_todos = data.filter_todos_by_tag(state.filter_tag)
+      if #state.filter_tags > 0 then
+        local filtered_todos = data.filter_todos_by_tags(state.filter_tags)
         render_list_with_todos(false, filtered_todos)
       else
         render_list(false)
@@ -336,8 +358,8 @@ local function handle_tag_input()
   vim.cmd('stopinsert')
   vim.api.nvim_buf_set_option(state.buf, 'modifiable', false)
   state.mode = "list"
-  if state.filter_tag then
-    local filtered_todos = data.filter_todos_by_tag(state.filter_tag)
+  if #state.filter_tags > 0 then
+    local filtered_todos = data.filter_todos_by_tags(state.filter_tags)
     render_list_with_todos(false, filtered_todos)
   else
     render_list(false)
@@ -349,8 +371,8 @@ local function handle_filter_select()
   local index = cursor[1] - 3
 
   if index > 0 and index <= #state.all_tags then
-    state.filter_tag = state.all_tags[index]
-    local filtered_todos = data.filter_todos_by_tag(state.filter_tag)
+    table.insert(state.filter_tags, state.all_tags[index])
+    local filtered_todos = data.filter_todos_by_tags(state.filter_tags)
     state.mode = "list"
     render_list_with_todos(false, filtered_todos)
   end
@@ -368,8 +390,8 @@ local function setup_keymaps()
   map('q', function()
     if state.mode == "menu" then
       M.close()
-    elseif state.mode == "list" and state.filter_tag then
-      state.filter_tag = nil
+    elseif state.mode == "list" and #state.filter_tags > 0 then
+      state.filter_tags = {}
       state.mode = "list"
       render_list(false)
     else
@@ -477,8 +499,8 @@ local function setup_keymaps()
       if state.edit_todo then
         state.edit_todo = nil
         state.mode = "list"
-        if state.filter_tag then
-          local filtered_todos = data.filter_todos_by_tag(state.filter_tag)
+        if #state.filter_tags > 0 then
+          local filtered_todos = data.filter_todos_by_tags(state.filter_tags)
           render_list_with_todos(false, filtered_todos)
         else
           render_list(false)
@@ -486,8 +508,8 @@ local function setup_keymaps()
       elseif state.tag_todo then
         state.tag_todo = nil
         state.mode = "list"
-        if state.filter_tag then
-          local filtered_todos = data.filter_todos_by_tag(state.filter_tag)
+        if #state.filter_tags > 0 then
+          local filtered_todos = data.filter_todos_by_tags(state.filter_tags)
           render_list_with_todos(false, filtered_todos)
         else
           render_list(false)
