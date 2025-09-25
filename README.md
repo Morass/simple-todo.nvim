@@ -16,7 +16,8 @@ A simple and lightweight TODO management plugin for Neovim.
 
 - Simple popup window for TODO management
 - Severity-based categorization with color coding
-- Quick add, list, and delete functionality
+- Quick add, list, edit, delete, and tag functionality
+- Tag-based filtering and organization
 - Persistent JSON storage
 - Pure Lua/Neovim (no external dependencies)
 
@@ -26,6 +27,11 @@ A simple and lightweight TODO management plugin for Neovim.
 
 ```vim
 Plug 'morass/simple-todo.nvim'
+```
+
+To use the latest development version with edit functionality:
+```vim
+Plug 'morass/simple-todo.nvim', { 'branch': 'feat/edit-functionality' }
 ```
 
 Then run `:PlugInstall`
@@ -61,8 +67,40 @@ use 'morass/simple-todo.nvim'
 - `j`/`k` - Navigate up/down
 - `Enter` - Select/confirm
 - `q` - Go back/close
+- `e` - Edit TODO text (in list mode)
+- `t` - Edit tags (in list mode)
+- `f` - Filter by tag (in list mode)
 - `d` - Delete (in delete mode)
 - `Escape` - Cancel text input
+
+### Edit Functionality
+
+The edit feature allows you to modify existing TODO items while preserving all attributes except the text content:
+
+1. Navigate to any TODO item in list view
+2. Press `e` to enter edit mode
+3. The text input window opens with the current TODO text pre-filled
+4. Modify the text as needed
+5. Press `Enter` to save changes or `Escape` to cancel
+6. All other attributes (severity level, creation time, tags) remain unchanged
+
+### Tag System
+
+The tag system allows you to organize and filter your TODO items:
+
+**Adding/Editing Tags:**
+1. Navigate to any TODO item in list view
+2. Press `t` to enter tag edit mode
+3. Enter tags separated by commas (e.g., "bug, evening event, feature")
+4. Press `Enter` to save tags or `Escape` to cancel
+
+**Filtering by Tags:**
+1. In list view, press `f` to open the filter screen
+2. All existing tags are displayed alphabetically
+3. Press `Enter` on any tag to filter the list
+4. Press `q` to return to the unfiltered list
+
+Tags are stored as part of each TODO item and persist across sessions.
 
 ## Configuration
 

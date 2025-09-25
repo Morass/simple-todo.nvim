@@ -100,7 +100,8 @@ M.add_todo = function(text, severity)
   table.insert(todos, {
     text = text,
     severity = severity,
-    created = os.time()
+    created = os.time(),
+    tags = {}
   })
   M.save_todos(todos)
 end
@@ -121,6 +122,32 @@ M.delete_todo = function(todo_to_delete)
   return false, nil
 end
 
+M.delete_todo_async = function(todo_to_delete, callback)
+  -- Use vim.defer_fn to move file I/O to next tick
+  vim.defer_fn(function()
+    local success, updated_todos = M.delete_todo(todo_to_delete)
+    if callback then
+      callback(success, updated_todos)
+    end
+  end, 0)
+end
+
+M.edit_todo = function(todo_to_edit, new_text)
+  local todos = M.load_todos()
+
+  for i, todo in ipairs(todos) do
+    if todo.text == todo_to_edit.text and
+       todo.severity == todo_to_edit.severity and
+       todo.created == todo_to_edit.created then
+      todos[i].text = new_text
+      M.save_todos(todos)
+      return true
+    end
+  end
+
+  return false
+end
+
 local function sort_todos(todos)
   table.sort(todos, function(a, b)
     local a_priority = severities[a.severity].priority
@@ -132,6 +159,110 @@ local function sort_todos(todos)
     return a_priority < b_priority
   end)
   return todos
+end
+
+M.edit_todo_tags = function(todo_to_edit, new_tags)
+  local todos = M.load_todos()
+
+  for i, todo in ipairs(todos) do
+    if todo.text == todo_to_edit.text and
+       todo.severity == todo_to_edit.severity and
+       todo.created == todo_to_edit.created then
+      todos[i].tags = new_tags
+      M.save_todos(todos)
+      return true
+    end
+  end
+
+  return false
+end
+
+M.get_all_tags = function()
+  local todos = M.load_todos()
+  local tag_set = {}
+
+  for _, todo in ipairs(todos) do
+    if todo.tags then
+      for _, tag in ipairs(todo.tags) do
+        tag_set[tag] = true
+      end
+    end
+  end
+
+  local tags = {}
+  for tag, _ in pairs(tag_set) do
+    table.insert(tags, tag)
+  end
+
+  table.sort(tags)
+  return tags
+end
+
+M.filter_todos_by_tag = function(tag_filter)
+  local todos = M.load_todos()
+  local filtered = {}
+
+  for _, todo in ipairs(todos) do
+    if todo.tags then
+      for _, tag in ipairs(todo.tags) do
+        if tag == tag_filter then
+          table.insert(filtered, todo)
+          break
+        end
+      end
+    end
+  end
+
+  return sort_todos(filtered)
+end
+
+M.filter_todos_by_tags = function(tag_filters)
+  local todos = M.load_todos()
+  local filtered = {}
+
+  for _, todo in ipairs(todos) do
+    if todo.tags then
+      local has_all_tags = true
+      for _, filter_tag in ipairs(tag_filters) do
+        local has_tag = false
+        for _, todo_tag in ipairs(todo.tags) do
+          if todo_tag == filter_tag then
+            has_tag = true
+            break
+          end
+        end
+        if not has_tag then
+          has_all_tags = false
+          break
+        end
+      end
+      if has_all_tags then
+        table.insert(filtered, todo)
+      end
+    end
+  end
+
+  return sort_todos(filtered)
+end
+
+M.get_tags_from_todos = function(todos)
+  local tag_set = {}
+
+  for _, todo in ipairs(todos) do
+    if todo.tags then
+      for _, tag in ipairs(todo.tags) do
+        tag_set[tag] = true
+      end
+    end
+  end
+
+  local tags = {}
+  for tag, _ in pairs(tag_set) do
+    table.insert(tags, tag)
+  end
+
+  table.sort(tags)
+  return tags
 end
 
 M.get_sorted_todos = function()

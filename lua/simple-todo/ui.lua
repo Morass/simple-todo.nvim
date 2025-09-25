@@ -7,7 +7,11 @@ local state = {
   mode = "menu",
   todos = {},
   selected_severity = nil,
-  ns_id = nil
+  ns_id = nil,
+  edit_todo = nil,
+  tag_todo = nil,
+  all_tags = {},
+  filter_tags = {}
 }
 
 local function create_window()
@@ -66,9 +70,18 @@ end
 
 local function render_list_with_todos(delete_mode, todos)
   state.todos = todos or data.get_sorted_todos()
+  local header = ""
+  if delete_mode then
+    header = "  Delete TODO (press 'd' to delete, 'q' to go back)"
+  elseif #state.filter_tags > 0 then
+    header = "  Filtered by: [" .. table.concat(state.filter_tags, " + ") .. "] ('e' edit, 't' tags, 'f' add filter, 'q' clear)"
+  else
+    header = "  TODO List (press 'e' to edit, 't' for tags, 'f' to filter, 'q' to go back)"
+  end
+
   local lines = {
     "",
-    delete_mode and "  Delete TODO (press 'd' to delete, q to go back)" or "  TODO List (press q to go back)",
+    header,
     ""
   }
 
@@ -142,9 +155,9 @@ end
 local function render_text_input()
   local lines = {
     "",
-    "  Enter TODO text:",
+    state.edit_todo and "  Edit TODO text:" or "  Enter TODO text:",
     "",
-    "  ",
+    state.edit_todo and ("  " .. state.edit_todo.text) or "  ",
     "",
     "  Press Enter to save, Escape to cancel"
   }
@@ -152,8 +165,82 @@ local function render_text_input()
   vim.api.nvim_buf_set_option(state.buf, 'modifiable', true)
   vim.api.nvim_buf_set_lines(state.buf, 0, -1, false, lines)
 
-  vim.api.nvim_win_set_cursor(state.win, {4, 2})
+  local cursor_col = state.edit_todo and (2 + #state.edit_todo.text) or 2
+  vim.api.nvim_win_set_cursor(state.win, {4, cursor_col})
   vim.cmd('startinsert')
+end
+
+local function render_tag_input()
+  local lines = {
+    "",
+    "  Edit Tags (comma-separated):",
+    "",
+    "  ",
+    "",
+    "  Press Enter to save, Escape to cancel"
+  }
+
+  if state.tag_todo and state.tag_todo.tags and #state.tag_todo.tags > 0 then
+    lines[4] = "  " .. table.concat(state.tag_todo.tags, ", ")
+  end
+
+  vim.api.nvim_buf_set_option(state.buf, 'modifiable', true)
+  vim.api.nvim_buf_set_lines(state.buf, 0, -1, false, lines)
+
+  local cursor_col = 2 + #lines[4] - 2  -- Position at end of tags
+  vim.api.nvim_win_set_cursor(state.win, {4, cursor_col})
+  vim.cmd('startinsert')
+end
+
+local function render_filter_selection()
+  local lines = {
+    "",
+    #state.filter_tags > 0 and "  Add another filter:" or "  Select Tag to Filter:",
+    "",
+  }
+
+  -- Get tags from currently displayed todos (filtered or all)
+  if #state.filter_tags > 0 then
+    state.all_tags = data.get_tags_from_todos(state.todos)
+  else
+    state.all_tags = data.get_all_tags()
+  end
+
+  -- Remove already applied filters from the list
+  local available_tags = {}
+  for _, tag in ipairs(state.all_tags) do
+    local already_filtered = false
+    for _, filter_tag in ipairs(state.filter_tags) do
+      if tag == filter_tag then
+        already_filtered = true
+        break
+      end
+    end
+    if not already_filtered then
+      table.insert(available_tags, tag)
+    end
+  end
+
+  if #available_tags == 0 then
+    table.insert(lines, "  No additional tags available")
+  else
+    for _, tag in ipairs(available_tags) do
+      table.insert(lines, "  " .. tag)
+    end
+  end
+
+  table.insert(lines, "")
+  table.insert(lines, "  Press Enter to add filter, 'q' to go back")
+
+  vim.api.nvim_buf_set_option(state.buf, 'modifiable', true)
+  vim.api.nvim_buf_set_lines(state.buf, 0, -1, false, lines)
+  vim.api.nvim_buf_set_option(state.buf, 'modifiable', false)
+
+  if #available_tags > 0 then
+    vim.api.nvim_win_set_cursor(state.win, {4, 0})
+  end
+
+  state.all_tags = available_tags
 end
 
 local function handle_menu_select()
@@ -162,6 +249,7 @@ local function handle_menu_select()
 
   if row == 4 then
     state.mode = "list"
+    state.filter_tags = {}
     render_list(false)
   elseif row == 5 then
     state.mode = "severity"
@@ -189,7 +277,22 @@ local function handle_text_input()
   local text = vim.trim(line)
 
   if text and text ~= "" then
-    data.add_todo(text, state.selected_severity)
+    if state.edit_todo then
+      data.edit_todo(state.edit_todo, text)
+      state.edit_todo = nil
+      vim.cmd('stopinsert')
+      vim.api.nvim_buf_set_option(state.buf, 'modifiable', false)
+      state.mode = "list"
+      if #state.filter_tags > 0 then
+        local filtered_todos = data.filter_todos_by_tags(state.filter_tags)
+        render_list_with_todos(false, filtered_todos)
+      else
+        render_list(false)
+      end
+      return
+    else
+      data.add_todo(text, state.selected_severity)
+    end
   end
 
   vim.cmd('stopinsert')
@@ -204,11 +307,85 @@ local function handle_delete()
 
   if index > 0 and index <= #state.todos then
     local todo_to_delete = state.todos[index]
-    local success, updated_todos = data.delete_todo(todo_to_delete)
-    if success then
-      state.todos = data.sort_todos(updated_todos)
-      render_list_with_todos(true, state.todos)
+
+    -- Optimistic update: remove from UI immediately
+    table.remove(state.todos, index)
+    render_list_with_todos(true, state.todos)
+
+    -- Then perform actual file deletion in background
+    data.delete_todo_async(todo_to_delete, function(success, updated_todos)
+      if not success then
+        -- If deletion failed, restore the item and show error
+        table.insert(state.todos, index, todo_to_delete)
+        render_list_with_todos(true, state.todos)
+        vim.notify("Failed to delete TODO", vim.log.levels.ERROR)
+      end
+      -- Note: On success, UI is already updated optimistically
+    end)
+  end
+end
+
+local function handle_edit()
+  local cursor = vim.api.nvim_win_get_cursor(state.win)
+  local index = cursor[1] - 3
+
+  if index > 0 and index <= #state.todos then
+    state.edit_todo = state.todos[index]
+    state.mode = "input"
+    render_text_input()
+  end
+end
+
+local function handle_tag_edit()
+  local cursor = vim.api.nvim_win_get_cursor(state.win)
+  local index = cursor[1] - 3
+
+  if index > 0 and index <= #state.todos then
+    state.tag_todo = state.todos[index]
+    state.mode = "tag_input"
+    render_tag_input()
+  end
+end
+
+local function handle_tag_input()
+  local line = vim.api.nvim_buf_get_lines(state.buf, 3, 4, false)[1]
+  local tag_string = vim.trim(line)
+  local tags = {}
+
+  if tag_string ~= "" then
+    for tag in tag_string:gmatch("[^,]+") do
+      local trimmed = vim.trim(tag)
+      if trimmed ~= "" then
+        table.insert(tags, trimmed)
+      end
     end
+  end
+
+  if state.tag_todo then
+    data.edit_todo_tags(state.tag_todo, tags)
+    state.tag_todo = nil
+  end
+
+  vim.cmd('stopinsert')
+  vim.api.nvim_buf_set_option(state.buf, 'modifiable', false)
+  state.mode = "list"
+  if #state.filter_tags > 0 then
+    local filtered_todos = data.filter_todos_by_tags(state.filter_tags)
+    render_list_with_todos(false, filtered_todos)
+  else
+    render_list(false)
+  end
+end
+
+local function handle_filter_select()
+  local cursor = vim.api.nvim_win_get_cursor(state.win)
+  local index = cursor[1] - 3
+
+  if index > 0 and index <= #state.all_tags then
+    table.insert(state.filter_tags, state.all_tags[index])
+    local filtered_todos = data.filter_todos_by_tags(state.filter_tags)
+    state.mode = "list"
+    render_list_with_todos(false, filtered_todos)
   end
 end
 
@@ -224,8 +401,13 @@ local function setup_keymaps()
   map('q', function()
     if state.mode == "menu" then
       M.close()
+    elseif state.mode == "list" and #state.filter_tags > 0 then
+      state.filter_tags = {}
+      state.mode = "list"
+      render_list(false)
     else
       state.mode = "menu"
+      state.filter_tags = {}
       render_menu()
     end
   end)
@@ -235,6 +417,8 @@ local function setup_keymaps()
       handle_menu_select()
     elseif state.mode == "severity" then
       handle_severity_select()
+    elseif state.mode == "filter" then
+      handle_filter_select()
     end
   end)
 
@@ -247,6 +431,12 @@ local function setup_keymaps()
     elseif state.mode == "severity" then
       local cursor = vim.api.nvim_win_get_cursor(state.win)
       if cursor[1] < 8 then
+        vim.api.nvim_win_set_cursor(state.win, {cursor[1] + 1, 0})
+      end
+    elseif state.mode == "filter" then
+      local cursor = vim.api.nvim_win_get_cursor(state.win)
+      local max_row = math.min(4 + #state.all_tags - 1, vim.api.nvim_buf_line_count(state.buf) - 2)
+      if cursor[1] < max_row then
         vim.api.nvim_win_set_cursor(state.win, {cursor[1] + 1, 0})
       end
     elseif (state.mode == "list" or state.mode == "delete") then
@@ -265,6 +455,11 @@ local function setup_keymaps()
       if cursor[1] > 4 then
         vim.api.nvim_win_set_cursor(state.win, {cursor[1] - 1, 0})
       end
+    elseif state.mode == "filter" then
+      local cursor = vim.api.nvim_win_get_cursor(state.win)
+      if cursor[1] > 4 then
+        vim.api.nvim_win_set_cursor(state.win, {cursor[1] - 1, 0})
+      end
     elseif (state.mode == "list" or state.mode == "delete") then
       vim.cmd('normal! k')
     end
@@ -276,12 +471,33 @@ local function setup_keymaps()
     end
   end)
 
+  map('e', function()
+    if state.mode == "list" then
+      handle_edit()
+    end
+  end)
+
+  map('t', function()
+    if state.mode == "list" then
+      handle_tag_edit()
+    end
+  end)
+
+  map('f', function()
+    if state.mode == "list" then
+      state.mode = "filter"
+      render_filter_selection()
+    end
+  end)
+
   vim.api.nvim_buf_set_keymap(state.buf, 'i', '<CR>', '', {
     noremap = true,
     silent = true,
     callback = function()
       if state.mode == "input" then
         handle_text_input()
+      elseif state.mode == "tag_input" then
+        handle_tag_input()
       end
     end
   })
@@ -292,8 +508,28 @@ local function setup_keymaps()
     callback = function()
       vim.cmd('stopinsert')
       vim.api.nvim_buf_set_option(state.buf, 'modifiable', false)
-      state.mode = "menu"
-      render_menu()
+      if state.edit_todo then
+        state.edit_todo = nil
+        state.mode = "list"
+        if #state.filter_tags > 0 then
+          local filtered_todos = data.filter_todos_by_tags(state.filter_tags)
+          render_list_with_todos(false, filtered_todos)
+        else
+          render_list(false)
+        end
+      elseif state.tag_todo then
+        state.tag_todo = nil
+        state.mode = "list"
+        if #state.filter_tags > 0 then
+          local filtered_todos = data.filter_todos_by_tags(state.filter_tags)
+          render_list_with_todos(false, filtered_todos)
+        else
+          render_list(false)
+        end
+      else
+        state.mode = "menu"
+        render_menu()
+      end
     end
   })
 end
@@ -334,6 +570,7 @@ M.open_list = function()
 
   state.buf, state.win = create_window()
   state.mode = "list"
+  state.filter_tags = {}
 
   if not state.ns_id then
     state.ns_id = vim.api.nvim_create_namespace('simple-todo')
@@ -348,6 +585,7 @@ M.open_add = function()
 
   state.buf, state.win = create_window()
   state.mode = "severity"
+  state.filter_tags = {}
 
   if not state.ns_id then
     state.ns_id = vim.api.nvim_create_namespace('simple-todo')
@@ -362,6 +600,7 @@ M.open_delete = function()
 
   state.buf, state.win = create_window()
   state.mode = "delete"
+  state.filter_tags = {}
 
   if not state.ns_id then
     state.ns_id = vim.api.nvim_create_namespace('simple-todo')
