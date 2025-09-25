@@ -100,7 +100,8 @@ M.add_todo = function(text, severity)
   table.insert(todos, {
     text = text,
     severity = severity,
-    created = os.time()
+    created = os.time(),
+    tags = {}
   })
   M.save_todos(todos)
 end
@@ -135,6 +136,61 @@ M.edit_todo = function(todo_to_edit, new_text)
   end
 
   return false
+end
+
+M.edit_todo_tags = function(todo_to_edit, new_tags)
+  local todos = M.load_todos()
+
+  for i, todo in ipairs(todos) do
+    if todo.text == todo_to_edit.text and
+       todo.severity == todo_to_edit.severity and
+       todo.created == todo_to_edit.created then
+      todos[i].tags = new_tags
+      M.save_todos(todos)
+      return true
+    end
+  end
+
+  return false
+end
+
+M.get_all_tags = function()
+  local todos = M.load_todos()
+  local tag_set = {}
+
+  for _, todo in ipairs(todos) do
+    if todo.tags then
+      for _, tag in ipairs(todo.tags) do
+        tag_set[tag] = true
+      end
+    end
+  end
+
+  local tags = {}
+  for tag, _ in pairs(tag_set) do
+    table.insert(tags, tag)
+  end
+
+  table.sort(tags)
+  return tags
+end
+
+M.filter_todos_by_tag = function(tag_filter)
+  local todos = M.load_todos()
+  local filtered = {}
+
+  for _, todo in ipairs(todos) do
+    if todo.tags then
+      for _, tag in ipairs(todo.tags) do
+        if tag == tag_filter then
+          table.insert(filtered, todo)
+          break
+        end
+      end
+    end
+  end
+
+  return sort_todos(filtered)
 end
 
 local function sort_todos(todos)
