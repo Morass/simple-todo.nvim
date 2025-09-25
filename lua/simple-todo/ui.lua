@@ -307,11 +307,21 @@ local function handle_delete()
 
   if index > 0 and index <= #state.todos then
     local todo_to_delete = state.todos[index]
-    local success, updated_todos = data.delete_todo(todo_to_delete)
-    if success then
-      state.todos = data.sort_todos(updated_todos)
-      render_list_with_todos(true, state.todos)
-    end
+
+    -- Optimistic update: remove from UI immediately
+    table.remove(state.todos, index)
+    render_list_with_todos(true, state.todos)
+
+    -- Then perform actual file deletion in background
+    data.delete_todo_async(todo_to_delete, function(success, updated_todos)
+      if not success then
+        -- If deletion failed, restore the item and show error
+        table.insert(state.todos, index, todo_to_delete)
+        render_list_with_todos(true, state.todos)
+        vim.notify("Failed to delete TODO", vim.log.levels.ERROR)
+      end
+      -- Note: On success, UI is already updated optimistically
+    end)
   end
 end
 

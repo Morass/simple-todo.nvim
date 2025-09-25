@@ -122,6 +122,16 @@ M.delete_todo = function(todo_to_delete)
   return false, nil
 end
 
+M.delete_todo_async = function(todo_to_delete, callback)
+  -- Use vim.defer_fn to move file I/O to next tick
+  vim.defer_fn(function()
+    local success, updated_todos = M.delete_todo(todo_to_delete)
+    if callback then
+      callback(success, updated_todos)
+    end
+  end, 0)
+end
+
 M.edit_todo = function(todo_to_edit, new_text)
   local todos = M.load_todos()
 
