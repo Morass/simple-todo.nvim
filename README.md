@@ -91,7 +91,7 @@ The tag system allows you to organize and filter your TODO items:
 **Adding/Editing Tags:**
 1. Navigate to any TODO item in list view
 2. Press `t` to enter tag edit mode
-3. Enter tags one per line (e.g., "bug", "evening event", "feature")
+3. Enter tags separated by commas (e.g., "bug, evening event, feature")
 4. Press `Enter` to save tags or `Escape` to cancel
 
 **Filtering by Tags:**

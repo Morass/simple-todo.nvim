@@ -173,25 +173,22 @@ end
 local function render_tag_input()
   local lines = {
     "",
-    "  Edit Tags (one per line):",
+    "  Edit Tags (comma-separated):",
     "",
+    "  ",
+    "",
+    "  Press Enter to save, Escape to cancel"
   }
 
-  if state.tag_todo and state.tag_todo.tags then
-    for _, tag in ipairs(state.tag_todo.tags) do
-      table.insert(lines, "  " .. tag)
-    end
+  if state.tag_todo and state.tag_todo.tags and #state.tag_todo.tags > 0 then
+    lines[4] = "  " .. table.concat(state.tag_todo.tags, ", ")
   end
-
-  table.insert(lines, "  ")
-  table.insert(lines, "")
-  table.insert(lines, "  Press Enter to save, Escape to cancel")
 
   vim.api.nvim_buf_set_option(state.buf, 'modifiable', true)
   vim.api.nvim_buf_set_lines(state.buf, 0, -1, false, lines)
 
-  local cursor_row = #lines - 2
-  vim.api.nvim_win_set_cursor(state.win, {cursor_row, 2})
+  local cursor_col = 2 + #lines[4] - 2  -- Position at end of tags
+  vim.api.nvim_win_set_cursor(state.win, {4, cursor_col})
   vim.cmd('startinsert')
 end
 
@@ -313,13 +310,16 @@ local function handle_tag_edit()
 end
 
 local function handle_tag_input()
-  local lines = vim.api.nvim_buf_get_lines(state.buf, 2, -3, false)
+  local line = vim.api.nvim_buf_get_lines(state.buf, 3, 4, false)[1]
+  local tag_string = vim.trim(line)
   local tags = {}
 
-  for _, line in ipairs(lines) do
-    local trimmed = vim.trim(line)
-    if trimmed ~= "" then
-      table.insert(tags, trimmed)
+  if tag_string ~= "" then
+    for tag in tag_string:gmatch("[^,]+") do
+      local trimmed = vim.trim(tag)
+      if trimmed ~= "" then
+        table.insert(tags, trimmed)
+      end
     end
   end
 
