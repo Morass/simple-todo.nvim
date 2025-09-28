@@ -55,13 +55,19 @@ local function render_menu()
   vim.api.nvim_buf_set_option(state.buf, 'modifiable', true)
   vim.api.nvim_buf_set_lines(state.buf, 0, -1, false, lines)
 
+  -- Define highlight groups
   vim.api.nvim_set_hl(0, 'SimpleTodoMenuList', { ctermfg = 33 })  -- slightly lighter blue
   vim.api.nvim_set_hl(0, 'SimpleTodoMenuAdd', { ctermfg = 46 })   -- green
   vim.api.nvim_set_hl(0, 'SimpleTodoMenuDelete', { ctermfg = 88 }) -- red
+  vim.api.nvim_set_hl(0, 'SimpleTodoHelpText', { ctermfg = 245 }) -- gray for help text
 
+  -- Apply highlights to menu items
   vim.api.nvim_buf_add_highlight(state.buf, -1, 'SimpleTodoMenuList', 3, 2, 8)
   vim.api.nvim_buf_add_highlight(state.buf, -1, 'SimpleTodoMenuAdd', 4, 2, 7)
   vim.api.nvim_buf_add_highlight(state.buf, -1, 'SimpleTodoMenuDelete', 5, 2, 10)
+
+  -- Apply gray highlighting to help text
+  vim.api.nvim_buf_add_highlight(state.buf, -1, 'SimpleTodoHelpText', 7, 0, -1)
 
   vim.api.nvim_buf_set_option(state.buf, 'modifiable', false)
 
@@ -98,6 +104,12 @@ local function render_list_with_todos(delete_mode, todos)
 
   vim.api.nvim_buf_set_option(state.buf, 'modifiable', true)
   vim.api.nvim_buf_set_lines(state.buf, 0, -1, false, lines)
+
+  -- Define gray help text highlight
+  vim.api.nvim_set_hl(0, 'SimpleTodoHelpText', { ctermfg = 245 })
+
+  -- Apply gray highlighting to the header/help text
+  vim.api.nvim_buf_add_highlight(state.buf, -1, 'SimpleTodoHelpText', 1, 0, -1)
 
   for i, todo in ipairs(state.todos) do
     local severity_info = data.severities[todo.severity]
@@ -141,12 +153,18 @@ local function render_severity_selection()
   vim.api.nvim_buf_set_option(state.buf, 'modifiable', true)
   vim.api.nvim_buf_set_lines(state.buf, 0, -1, false, lines)
 
+  -- Define gray help text highlight
+  vim.api.nvim_set_hl(0, 'SimpleTodoHelpText', { ctermfg = 245 })
+
   for i = 1, 5 do
     local severity_info = data.severities[severity_names[i]]
 
     vim.api.nvim_set_hl(0, 'SimpleTodo' .. severity_names[i], { ctermfg = severity_info.color })
     vim.api.nvim_buf_add_highlight(state.buf, -1, 'SimpleTodo' .. severity_names[i], 2 + i, 2, -1)
   end
+
+  -- Apply gray highlighting to help text
+  vim.api.nvim_buf_add_highlight(state.buf, -1, 'SimpleTodoHelpText', 9, 0, -1)
 
   vim.api.nvim_buf_set_option(state.buf, 'modifiable', false)
   vim.api.nvim_win_set_cursor(state.win, {4, 0})
@@ -164,6 +182,10 @@ local function render_text_input()
 
   vim.api.nvim_buf_set_option(state.buf, 'modifiable', true)
   vim.api.nvim_buf_set_lines(state.buf, 0, -1, false, lines)
+
+  -- Define and apply gray help text highlight
+  vim.api.nvim_set_hl(0, 'SimpleTodoHelpText', { ctermfg = 245 })
+  vim.api.nvim_buf_add_highlight(state.buf, -1, 'SimpleTodoHelpText', 5, 0, -1)
 
   local cursor_col = state.edit_todo and (2 + #state.edit_todo.text) or 2
   vim.api.nvim_win_set_cursor(state.win, {4, cursor_col})
@@ -186,6 +208,10 @@ local function render_tag_input()
 
   vim.api.nvim_buf_set_option(state.buf, 'modifiable', true)
   vim.api.nvim_buf_set_lines(state.buf, 0, -1, false, lines)
+
+  -- Define and apply gray help text highlight
+  vim.api.nvim_set_hl(0, 'SimpleTodoHelpText', { ctermfg = 245 })
+  vim.api.nvim_buf_add_highlight(state.buf, -1, 'SimpleTodoHelpText', 5, 0, -1)
 
   local cursor_col = 2 + #lines[4] - 2  -- Position at end of tags
   vim.api.nvim_win_set_cursor(state.win, {4, cursor_col})
@@ -234,6 +260,12 @@ local function render_filter_selection()
 
   vim.api.nvim_buf_set_option(state.buf, 'modifiable', true)
   vim.api.nvim_buf_set_lines(state.buf, 0, -1, false, lines)
+
+  -- Define and apply gray help text highlight
+  vim.api.nvim_set_hl(0, 'SimpleTodoHelpText', { ctermfg = 245 })
+  -- Apply gray highlighting to help text (last line before applying)
+  vim.api.nvim_buf_add_highlight(state.buf, -1, 'SimpleTodoHelpText', #lines - 1, 0, -1)
+
   vim.api.nvim_buf_set_option(state.buf, 'modifiable', false)
 
   if #available_tags > 0 then
