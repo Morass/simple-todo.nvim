@@ -34,11 +34,16 @@ M.set_original_file_path = function(path)
   original_file_path = path
 end
 
+-- The one place the storage location is decided. load and save must agree:
+-- when they disagreed, the first todo added in a repo was read from the global
+-- list and then written, global entries and all, into the project file.
 local function get_todo_file()
   local git_root = get_git_root()
   if git_root then
     local repo_todo_file = git_root .. '/.simple_todos.json'
-    if vim.fn.filereadable(repo_todo_file) == 1 then
+    -- The repo file is the target whether or not it exists yet; a missing one
+    -- simply reads as an empty list and is created by the first save.
+    if vim.fn.filereadable(repo_todo_file) == 1 or not vim.g.simple_todo_file then
       return repo_todo_file
     end
   end
@@ -74,16 +79,6 @@ end
 
 M.save_todos = function(todos)
   local file_path = get_todo_file()
-
-  if not vim.g.simple_todo_file then
-    local git_root = get_git_root()
-    if git_root then
-      local repo_todo_file = git_root .. '/.simple_todos.json'
-      if vim.fn.filereadable(repo_todo_file) == 0 then
-        file_path = repo_todo_file
-      end
-    end
-  end
 
   local file = io.open(file_path, "w")
   if not file then

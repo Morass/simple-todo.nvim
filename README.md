@@ -108,11 +108,11 @@ Tags are stored as part of each TODO item and persist across sessions.
 
 The plugin uses a smart storage system that automatically determines where to save your TODOs, with the following priority order:
 
-1. **Repository-specific storage** (highest priority): If you're editing a file in a git repository and `.simple_todos.json` exists in the repository root, it will always be used. This ensures project-specific TODOs are always preferred.
+1. **Repository-specific storage** (highest priority): If you're editing a file in a git repository, `.simple_todos.json` in the repository root is used. It does not need to exist yet -- a repo without one starts with an empty list, and the file is created when you add your first TODO. This ensures project-specific TODOs are always preferred.
 
-2. **Custom location** (medium priority): If you've set `g:simple_todo_file`, it will be used when no repository-specific file exists.
+2. **Custom location**: If you've set `g:simple_todo_file`, it is used instead of creating a per-repository file. An existing `.simple_todos.json` in the repo root still wins, so a project that already keeps its own list keeps using it.
 
-3. **Global storage** (lowest priority): When not in a git repository or if no `.simple_todos.json` exists in the repo, TODOs are stored in Neovim's data directory at `~/.local/share/nvim/simple-todo.json` (location varies by OS).
+3. **Global storage** (lowest priority): When not in a git repository and with no custom location set, TODOs are stored in Neovim's data directory at `~/.local/share/nvim/simple-todo.json` (location varies by OS).
 
 ```vim
 let g:simple_todo_file = '/path/to/your/todos.json'
